@@ -1,0 +1,7 @@
+https://fordatis.fraunhofer.de/handle/fordatis/287
+https://gitlab.cc-asp.fraunhofer.de/ifk_public/sunrise/public-mdpi-dataset-helper-scripts/-/tree/dataset_20220711
+https://github.com/DaftJun/S3R
+https://ieee-dataport.org/documents/dronerfb-spectra-rf-spectrogram-dataset-drone-recognition
+https://www.mathworks.com/help/signal/ug/automated-labeling-of-time-frequency-regions-for-ai-based-spectrum-sensing-applications.html
+https://data.mendeley.com/datasets/f4c2b4n755/1
+https://github.com/Al-Sad/DroneRF
