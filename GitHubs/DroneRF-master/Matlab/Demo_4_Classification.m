@@ -28,8 +28,9 @@
 %~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~%
 
 close all; clear; clc
-filepath = fileparts(pwd);
-filepath = [filepath '\Data\'];
+% filepath = fileparts(pwd);
+% Only when the confusion matrix gets generated
+filepath = '';
 
 %% Parameters
 opt = 1;  % Change to 1, 2, or 3 to alternate between the 1st, 2nd, and 3rd DNN results respectively.
