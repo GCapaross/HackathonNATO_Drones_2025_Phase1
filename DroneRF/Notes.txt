@@ -1,0 +1,4 @@
+Temos tres tipos (opt):
+opt1: detetar ou não a presença de drone
+opt2: detetar a presenca de drone e o tipo
+opt3: detetar a preseca de um drone, o tipo e o modo de voo

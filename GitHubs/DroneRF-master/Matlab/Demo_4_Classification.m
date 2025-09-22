@@ -33,7 +33,7 @@ close all; clear; clc
 filepath = 'G:\Programing\HackathonNATO_Drones_2025\GitHubs\DroneRF-master\Python\';
 
 %% Parameters
-opt = 3;  % Change to 1, 2, or 3 to alternate between the 1st, 2nd, and 3rd DNN results respectively.
+opt = 1;  % Change to 1, 2, or 3 to alternate between the 1st, 2nd, and 3rd DNN results respectively.
 %In this MATLAB script, opt is a variable that tells the script which DNN (Deep Neural Network) results you are using. It controls two main things:
 
 %Which columns of the CSV are used
