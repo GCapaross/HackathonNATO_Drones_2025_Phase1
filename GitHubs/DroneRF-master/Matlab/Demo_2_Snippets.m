@@ -28,7 +28,7 @@
 %~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~%
 
 close all; clear; clc
-filename = 'G:\Data\';  % Path of raw RF data
+filename = 'G:\Programing\HackathonNATO_Drones_2025\csv_files_dataset\';  % Path of raw RF data
 
 %% Parameters
 BUI{1,1} = {'00000'};                         % BUI of RF background activities

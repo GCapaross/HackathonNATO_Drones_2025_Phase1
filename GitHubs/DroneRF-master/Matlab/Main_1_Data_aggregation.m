@@ -28,10 +28,16 @@
 %~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~%
 
 close all; clear; clc
-load_filename = 'G:\Data\';                 % Path of raw RF data
-save_filename = fileparts(pwd);
-save_filename = [save_filename '\Data\'];   % Path of aggregated data
+load_filename = 'G:\Programing\HackathonNATO_Drones_2025\csv_files_dataset\';                 % Path of raw RF data
+% save_filename = fileparts(pwd);
+% save_filename = [save_filename 'G:\Programing\HackathonNATO_Drones_2025\Data_aggregated\'];   % Path of aggregated data
+% Define save path
+save_filename = 'G:\Programing\HackathonNATO_Drones_2025\Data_aggregated';
 
+% Make sure the folder exists (create if not)
+if ~exist(save_filename, 'dir')
+    mkdir(save_filename);
+end
 %% Parameters
 BUI{1,1} = {'00000'};                         % BUI of RF background activities
 BUI{1,2} = {'10000','10001','10010','10011'}; % BUI of the Bebop drone RF activities
@@ -71,7 +77,14 @@ for opt = 1:length(BUI)
             disp(100*n/N)
         end
         Data = data.^2;
-        % Saving
-        save([save_filename BUI{1,opt}{b} '.mat'],'Data');
+        
+        % Ensure save path exists
+        if ~exist(save_filename, 'dir')
+            mkdir(save_filename);
+        end
+        
+        % Save data
+        save(fullfile(save_filename, [BUI{1,opt}{b} '.mat']), 'Data');
+
     end
 end
