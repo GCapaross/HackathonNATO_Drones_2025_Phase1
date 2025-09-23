@@ -196,7 +196,7 @@ def main():
     ])
     
     # Load dataset
-    dataset = SpectrogramDataset('/path/to/your/results', transform=transform)
+    dataset = SpectrogramDataset('G:/Programing/HackathonNATO_Drones_2025/GitHubs/public-mdpi-dataset-helper-scripts-dataset_20220711/spectrogram_results/', transform=transform)
     
     # Split dataset
     train_size = int(0.7 * len(dataset))
