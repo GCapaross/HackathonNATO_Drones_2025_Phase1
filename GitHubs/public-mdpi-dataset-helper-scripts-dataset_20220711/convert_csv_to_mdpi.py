@@ -10,8 +10,8 @@ import csv
 
 def convert_csv_to_mdpi():
     # Paths
-    csv_dir = pathlib.Path("/home/gabriel/Desktop/Hackathon2025/csv_files_dataset")
-    out_root = pathlib.Path("/home/gabriel/Desktop/Hackathon2025/GitHubs/public-mdpi-dataset-helper-scripts-dataset_20220711")
+    csv_dir = pathlib.Path("G:/Programing/HackathonNATO_Drones_2025/csv_files_dataset")
+    out_root = pathlib.Path("G:/Programing/HackathonNATO_Drones_2025/GitHubs/public-mdpi-dataset-helper-scripts-dataset_20220711")
     results = out_root / "results"
     labels_dir = out_root / "merged_packets" / "bw_40e6"
     BW_HZ = 40000000  # 40 MHz bandwidth

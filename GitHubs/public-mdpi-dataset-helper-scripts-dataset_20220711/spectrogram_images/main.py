@@ -8,9 +8,9 @@
 import argparse
 from pathlib import Path
 
-from spectrogram_images.generator import make_spectrograms, Resolution
-from spectrogram_images.directory_manager import DirectoryManager
-from spectrogram_images.sample_files_list import SampleFileList
+from generator import make_spectrograms, Resolution
+from directory_manager import DirectoryManager
+from sample_files_list import SampleFileList
 
 parser = argparse.ArgumentParser(
     description="Generate spectrogram images from the time signal sample files. ",
