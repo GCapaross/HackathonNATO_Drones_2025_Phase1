@@ -79,18 +79,24 @@ if __name__ == "__main__":
                  "_gamma_" + str(gamma) + \
                  "_tips_" + tips + \
                  ".pkl"
-    model_paras = torch.load(model_path)
+
+    # model_paras = torch.load(model_path)   # original line
+    device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")  # fixed: define device first
+    model_paras = torch.load(model_path, map_location=device)  # fixed: safe load for cpu/gpu
+
     # load data
     known_train_data = MyDataset(path_txt='./experiment_groups/' + str(my_index) + '-known_for_train', len_time=time_size, gamma=gamma, size=512)
     known_test_data = MyDataset(path_txt='./experiment_groups/' + str(my_index) + '-known_for_test', len_time=time_size, gamma=gamma, size=512)
-    unknown_test_data = MyDataset(path_txt='./experiment_groups/' + str(my_index) + '-unknown', len_time=time_size, gamma=gamma,size=512)
+    unknown_test_data = MyDataset(path_txt='./experiment_groups/' + str(my_index) + '-unknown', len_time=time_size, gamma=gamma, size=512)
     known_train_loader = DataLoader(dataset=known_train_data, batch_size=1, shuffle=True, drop_last=False)
     known_test_loader = DataLoader(dataset=known_test_data, batch_size=1, shuffle=True, drop_last=False)
     unknown_test_loader = DataLoader(dataset=unknown_test_data, batch_size=1, shuffle=True, drop_last=False)
+
     # configure network
-    device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
     Net = NET(in_channels=1, input_size=[int(512*time_size), 512], semantic_dim=semantic_dim, num_class=num_known, device=device).to(device)
-    Net.load_state_dict(model_paras)
+
+    # Net.load_state_dict(model_paras)   # original line, kept for clarity
+    Net.load_state_dict(model_paras)     # fixed: now loading works after safe torch.load
     # get centers, thresholds from train data
     with torch.no_grad():
         Net.eval()
