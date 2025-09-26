@@ -1,0 +1,194 @@
+NATO Hackathon - CNN + YOLO Workflow for Drone Detection
+========================================================
+
+COMPLETE WORKFLOW OVERVIEW
+==========================
+
+Raw RF Signals → Spectrogram Generation → CNN Classification → YOLO Detection
+     ↑                    ↑                      ↑              ↑
+   Real-time          Signal Processing      Trained Model   Object Detection
+
+DETAILED WORKFLOW EXPLANATION
+=============================
+
+1. REAL-TIME SIGNAL PROCESSING (What we'll actually do)
+-------------------------------------------------------
+Input: Raw RF signals (CSV data, not images)
+Process: Convert signals to spectrograms in real-time
+Output: Spectrogram images for CNN/YOLO
+
+2. TRAINING PHASE (What we're doing now)
+----------------------------------------
+Input: Pre-generated spectrogram images from results/ folder
+Purpose: Train CNN to recognize patterns in spectrograms
+Goal: Learn what drone signals look like in spectrogram form
+
+3. DEPLOYMENT PHASE (Real-world usage)
+--------------------------------------
+Input: Live RF signals (CSV format)
+Process: Convert to spectrograms using signal processing
+CNN: Classify the spectrograms
+YOLO: Detect and localize signal regions
+
+LABELING SITUATION - WE DO HAVE LABELED DATA!
+=============================================
+
+YES, WE HAVE LABELED DATA! Here's what we have:
+
+1. SPECTROGRAM IMAGES (results/ folder)
+---------------------------------------
+- 40,000+ PNG spectrogram images
+- Each image shows RF signals in time-frequency representation
+- Images are 1024x192 pixels
+- Multiple bandwidths: 25MHz, 45MHz, 60MHz, 125MHz
+
+2. YOLO FORMAT LABELS (corresponding .txt files)
+------------------------------------------------
+- Each PNG has a corresponding .txt file with YOLO format labels
+- Format: class_id center_x center_y width height
+- Class 0: Background/Noise
+- Class 1: WLAN signals  
+- Class 2: Bluetooth signals
+- Values are normalized (0-1)
+
+3. WHAT THE LABELS REPRESENT
+---------------------------
+- The labels mark rectangular regions in the spectrogram
+- Each rectangle represents a signal transmission
+- The rectangles show:
+  * WHERE the signal appears (x,y coordinates)
+  * HOW BIG the signal is (width, height)
+  * WHAT TYPE of signal it is (class_id)
+
+4. EXAMPLE FROM OUR DATA
+------------------------
+File: result_frame_138769090412766231_bw_25E+6.txt
+Content:
+0 0.023258 0.95 0.016187 0.1    # Class 0, center at (0.023, 0.95), size 0.016x0.1
+0 0.04172 0.5 0.051654 0.8      # Class 0, center at (0.041, 0.5), size 0.051x0.8
+1 0.14761 0.3 0.009156 0.4      # Class 1 (WLAN), center at (0.147, 0.3), size 0.009x0.4
+2 0.378523 0.5 0.010196 0.08   # Class 2 (Bluetooth), center at (0.378, 0.5), size 0.010x0.08
+
+TRAINING APPROACH
+================
+
+1. CNN CLASSIFICATION TASK
+--------------------------
+- Input: Spectrogram images (1024x192 pixels)
+- Output: Signal type classification
+- Classes: WLAN, Bluetooth, BLE, Background/Noise
+- Use the class_id from YOLO labels for training
+
+2. YOLO OBJECT DETECTION TASK
+-----------------------------
+- Input: Spectrogram images (1024x192 pixels)
+- Output: Bounding boxes around signal regions
+- Use the full YOLO format (class_id, x, y, width, height)
+- Detect and localize signal transmissions
+
+3. COMBINED APPROACH
+--------------------
+- CNN: "What type of signal is this?"
+- YOLO: "Where are the signals in this image?"
+- Together: "What signals are where in this spectrogram?"
+
+DATA PREPARATION STEPS
+======================
+
+1. LOAD SPECTROGRAM IMAGES
+--------------------------
+- Read PNG files from results/ folder
+- Resize to standard CNN input size (e.g., 224x224 or keep 1024x192)
+- Normalize pixel values (0-1 or -1 to 1)
+
+2. LOAD YOLO LABELS
+-------------------
+- Read corresponding .txt files
+- Parse YOLO format: class_id center_x center_y width height
+- Convert to bounding box coordinates if needed
+
+3. CREATE TRAINING DATASETS
+----------------------------
+- Split images into train/validation/test sets
+- Use existing list_images_train.txt and list_images_valid.txt
+- Balance classes if needed
+
+4. DATA AUGMENTATION
+--------------------
+- Rotate spectrograms (small angles)
+- Add noise to simulate real conditions
+- Adjust brightness/contrast
+- Time-frequency shifts
+
+MODEL ARCHITECTURE
+==================
+
+1. CNN FOR CLASSIFICATION
+-------------------------
+- Input: Spectrogram images
+- Architecture: ResNet, EfficientNet, or custom CNN
+- Output: 4 classes (WLAN, Bluetooth, BLE, Background)
+- Loss: Cross-entropy
+
+2. YOLO FOR OBJECT DETECTION
+----------------------------
+- Input: Spectrogram images
+- Architecture: YOLOv5 or YOLOv8
+- Output: Bounding boxes + class predictions
+- Loss: Combined classification + localization loss
+
+3. HYBRID MODEL
+---------------
+- Shared backbone (feature extractor)
+- Two heads: Classification + Detection
+- End-to-end training
+
+REAL-TIME DEPLOYMENT
+====================
+
+1. SIGNAL PROCESSING PIPELINE
+-----------------------------
+- Read raw RF signals (CSV format)
+- Apply FFT to convert to frequency domain
+- Create spectrogram using sliding window
+- Normalize and preprocess
+
+2. MODEL INFERENCE
+------------------
+- Load trained CNN and YOLO models
+- Process spectrogram through models
+- Get classification and detection results
+- Post-process and filter results
+
+3. OUTPUT INTERPRETATION
+------------------------
+- Classification: "This spectrogram contains WLAN signals"
+- Detection: "WLAN signal detected at frequency X, time Y"
+- Confidence scores for both tasks
+
+KEY INSIGHTS
+============
+
+1. WE HAVE LABELED DATA
+- 40,000+ labeled spectrograms
+- YOLO format annotations
+- Multiple signal types
+- Ready for supervised learning
+
+2. THE LABELS ARE ALREADY THERE
+- No manual labeling needed
+- Just need to parse the .txt files
+- Use existing train/validation splits
+
+3. WE CAN TRAIN IMMEDIATELY
+- Load images and labels
+- Create data loaders
+- Train CNN and YOLO models
+- No additional data collection needed
+
+4. REAL-TIME CONVERSION
+- Need to build signal-to-spectrogram converter
+- Use same parameters as training data
+- Ensure consistency between training and inference
+
+This workflow gives us everything we need to build a robust drone detection system!
