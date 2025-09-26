@@ -1,0 +1,25 @@
+
+PREDICTION VISUALIZATION SUMMARY
+================================
+
+Total Samples: 10
+Correct Predictions: 9
+Overall Accuracy: 0.900
+
+Per-Class Accuracy:
+  Background: 1/1 (1.000)
+  WLAN: 6/6 (1.000)
+  Bluetooth: 2/3 (0.667)
+  BLE: 0/0 (N/A)
+
+Sample Details:
+   1. WLAN → WLAN ✓ (conf: 0.997)
+   2. Bluetooth → Bluetooth ✓ (conf: 0.961)
+   3. WLAN → WLAN ✓ (conf: 1.000)
+   4. WLAN → WLAN ✓ (conf: 0.608)
+   5. Bluetooth → Bluetooth ✓ (conf: 0.898)
+   6. WLAN → WLAN ✓ (conf: 0.842)
+   7. Bluetooth → WLAN ✗ (conf: 0.826)
+   8. WLAN → WLAN ✓ (conf: 0.999)
+   9. WLAN → WLAN ✓ (conf: 0.998)
+  10. Background → Background ✓ (conf: 0.998)
