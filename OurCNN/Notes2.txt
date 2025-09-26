@@ -1,0 +1,143 @@
+NATO Hackathon Dataset Structure Analysis
+==========================================
+
+OVERVIEW
+--------
+The spectrogram_training_data_20220711 folder contains a comprehensive dataset for RF signal analysis and drone detection. The dataset is organized into several key components for training CNN models.
+
+DATASET STRUCTURE
+-----------------
+
+1. CONFIG FILES
+---------------
+- config_training_data.toml: Main configuration for data generation
+- config_packet_capture.toml: Configuration for packet capture parameters
+
+2. RESULTS FOLDER (Main Training Data)
+---------------------------------------
+Location: spectrogram_training_data_20220711/results/
+Size: 40,000 PNG files + 20,000+ TXT files
+Content: Generated spectrograms with YOLO format labels
+
+File Types:
+- result_frame_[timestamp]_bw_[bandwidth]E+6.png: Spectrogram images
+- result_frame_[timestamp]_bw_[bandwidth]E+6_marked.png: Marked/annotated versions
+- result_frame_[timestamp]_bw_[bandwidth]E+6.txt: YOLO format labels
+
+Bandwidths Available:
+- 25MHz (bw_25E+6)
+- 45MHz (bw_45E+6) 
+- 60MHz (bw_60E+6)
+- 125MHz (bw_125E+6)
+
+YOLO Label Format (from result_frame_138769090412766231_bw_25E+6.txt):
+- Format: class_id center_x center_y width height
+- Class 0: Background/Noise
+- Class 1: WLAN signals
+- Class 2: Bluetooth signals
+- Values are normalized (0-1)
+
+3. MERGED_PACKETS FOLDER
+------------------------
+Location: spectrogram_training_data_20220711/merged_packets/
+Content: Raw RF signal data in CSV format
+Structure:
+- bw_25e6/: 5,000 CSV files + 5,000 binary files
+- bw_45e6/: 5,000 CSV files + 5,000 binary files  
+- bw_60e6/: 5,000 CSV files + 5,000 binary files
+- bw_125e6/: 5,000 CSV files + 5,000 binary files
+
+4. SINGLE_PACKET_SAMPLES FOLDER
+-------------------------------
+Location: spectrogram_training_data_20220711/single_packet_samples/
+Content: Individual packet samples for different protocols
+
+Subfolders:
+- BLE_1MHz/: 21 .packet files + 21 .png files
+- BLE_2MHz/: 8 .packet files + 8 .png files  
+- BT_classic/: 29 .packet files + 29 .png files
+- wlan/: 480 .packet files + 480 .png files
+
+5. TRAINING/VALIDATION SPLITS
+------------------------------
+- list_images_train.txt: Training set file paths
+- list_images_valid.txt: Validation set file paths
+- list_images.txt: All images list
+
+SIGNAL TYPES AND CLASSES
+-------------------------
+Based on configuration and labels:
+
+1. WLAN (WiFi) Signals
+- Standards: WAC, WBG, WPJ, WN
+- Bandwidths: 20MHz, 40MHz, 80MHz
+- MCS (Modulation Coding Scheme): 1, 3, 7
+- Packet types: DATA, TRIG, BEAC
+
+2. Bluetooth Classic
+- Modes: BAS (Basic)
+- Packet types: DH5, ADH5, AEDH5
+- Data rates: 1Mbps, 2Mbps, 3Mbps
+
+3. Bluetooth Low Energy (BLE)
+- Modes: BLE
+- Channel types: DATA, ADV
+- Packet formats: L1M, L2M, LCOD
+- Data rates: 1Mbps, 2Mbps
+
+4. Background/Noise
+- Class 0 in YOLO labels
+- Environmental noise and interference
+
+TECHNICAL SPECIFICATIONS
+------------------------
+- Sample rates: 25MHz, 45MHz, 60MHz, 125MHz
+- Center frequency: 2.412GHz
+- Spectrogram resolution: 1024x192 pixels
+- FFT size: 128
+- Frame duration: 45e-4 seconds (short frames)
+- Max collisions per frame: 4
+- SNR range: -20dB to +6dB
+
+AUGMENTATION PARAMETERS
+------------------------
+- Frequency offsets: -65MHz to +65MHz
+- Multipath components: Up to 6
+- Max speed: 20 km/h
+- Ricean channel model
+- Packet count per frame: 18-25
+- Noise amplitude: 0.0055-0.0065
+
+CNN TRAINING APPROACH
+---------------------
+For our CNN + YOLO approach:
+
+1. INPUT DATA
+- Use PNG spectrogram images from results/ folder
+- Images are 1024x192 pixels
+- Each image has corresponding YOLO labels
+
+2. PREPROCESSING
+- Resize images if needed for CNN input
+- Normalize pixel values
+- Data augmentation (rotation, noise, etc.)
+
+3. CLASSIFICATION TASKS
+- Binary: Drone present (1) vs No drone (0)
+- Multi-class: WLAN, Bluetooth, BLE, Background
+- Object detection: Localize signal regions
+
+4. MODEL ARCHITECTURE
+- CNN for spectrogram classification
+- YOLO for object detection and localization
+- Hybrid approach combining both
+
+DATASET USAGE STRATEGY
+----------------------
+1. Start with smaller subset (1000-5000 images)
+2. Use different bandwidths for robustness testing
+3. Implement data augmentation for better generalization
+4. Use marked images for validation
+5. Combine with single packet samples for fine-tuning
+
+This dataset provides everything needed for training a robust CNN model for drone detection and classification using RF spectrograms.
