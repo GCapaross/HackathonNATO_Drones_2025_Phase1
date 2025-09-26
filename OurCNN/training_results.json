@@ -1,0 +1,47 @@
+{
+  "model_name": "SpectrogramCNN",
+  "best_accuracy": 87.2,
+  "best_epoch": 23,
+  "total_parameters": 426628,
+  "training_samples": 16000,
+  "validation_samples": 4000,
+  "class_names": [
+    "Background",
+    "WLAN",
+    "Bluetooth",
+    "BLE"
+  ],
+  "classification_report": {
+    "Background": {
+      "precision": 0.9415807560137457,
+      "recall": 1.0,
+      "f1-score": 0.9699115044247788,
+      "support": 274.0
+    },
+    "WLAN": {
+      "precision": 0.893045953639691,
+      "recall": 0.8697029702970297,
+      "f1-score": 0.8812199036918138,
+      "support": 2525.0
+    },
+    "Bluetooth": {
+      "precision": 0.748,
+      "recall": 0.7785179017485429,
+      "f1-score": 0.762953896368829,
+      "support": 1201.0
+    },
+    "accuracy": 0.85125,
+    "macro avg": {
+      "precision": 0.8608755698844789,
+      "recall": 0.8827402906818574,
+      "f1-score": 0.8713617681618072,
+      "support": 4000.0
+    },
+    "weighted avg": {
+      "precision": 0.8528205400219965,
+      "recall": 0.85125,
+      "f1-score": 0.8517859096432958,
+      "support": 4000.0
+    }
+  }
+}
