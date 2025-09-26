@@ -1,3 +1,6 @@
 # Datasets
 Datasets/*
+csv_files_dataset/*
+
+# Virtual Environments
 GitHubs/*/venv
