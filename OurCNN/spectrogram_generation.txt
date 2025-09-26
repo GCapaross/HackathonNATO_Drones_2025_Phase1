@@ -1,0 +1,108 @@
+SPECTROGRAM GENERATION EXPLANATION
+===================================
+
+YES! The project provides scripts and instructions for generating spectrograms from raw RF signals.
+
+HOW TO GENERATE SPECTROGRAMS:
+----------------------------
+
+1. LOCATION OF SCRIPTS:
+   - GitHubs/public-mdpi-dataset-helper-scripts-dataset_20220711/spectrogram_images/
+   - Main script: main.py
+   - Generator: generator.py
+
+2. USAGE:
+   ```bash
+   python main.py -p /path/to/data -c viridis -r 1024 192
+   ```
+
+3. PARAMETERS:
+   - -p: Path to dataset containing raw signal files
+   - -c: Colormap (default: viridis)
+   - -r: Resolution (width height, default: 1024 192)
+
+TECHNICAL DETAILS:
+------------------
+
+SPECTROGRAM GENERATION PROCESS:
+1. Read complex signal samples from binary files (.bin or raw data)
+2. Apply FFT (Fast Fourier Transform) with specified window size
+3. Generate spectrogram using matplotlib's specgram function
+4. Apply normalization and colormap
+5. Save as PNG image
+
+KEY PARAMETERS FROM CONFIG:
+- Sample rates: [25MHz, 45MHz, 60MHz, 125MHz]
+- FFT size: 128 (from config)
+- Resolution: 1024x192 pixels
+- Normalization: -150dB to -50dB range
+- Window function: Hanning window
+
+CODE EXAMPLE (from generator.py):
+```python
+def __spectrogram(file_path, png_resolution, fft_size, norm_vmin, norm_vmax):
+    # Read samples from file
+    result_samples = np.fromfile(file_path, dtype=np.complex64)
+    
+    # Generate spectrogram
+    fig, ax = plt.subplots(figsize=(png_resolution.x / 100, png_resolution.y / 100))
+    ax.specgram(
+        result_samples,
+        NFFT=fft_size,           # FFT size
+        Fs=42e6,                 # Sample rate
+        noverlap=0,              # No overlap
+        mode="default",
+        sides="default",
+        vmin=norm_vmin,          # -150dB
+        vmax=norm_vmax,          # -50dB
+        window=np.hanning(fft_size),  # Hanning window
+        cmap=colormap,           # Color scheme
+    )
+    # Save as PNG
+    plt.savefig(file_path.with_suffix(".png"))
+```
+
+SIGNAL PROCESSING PARAMETERS:
+-----------------------------
+- Input: Complex64 binary files (I/Q samples)
+- FFT Size: 128 points
+- Sample Rate: 42MHz (dummy rate for display)
+- Window: Hanning window
+- Overlap: 0 (no overlap between FFT frames)
+- Normalization: -150dB to -50dB range
+
+AUGMENTATION PARAMETERS:
+-----------------------
+From config_training_data.toml:
+- Frame duration: 45e-4 seconds (4.5ms)
+- Max collisions: 4 packets
+- SNR range: -20dB to +6dB
+- Frequency offsets: ±65MHz range
+- Channel effects: Ricean fading, multipath, Doppler
+
+REAL-TIME SPECTROGRAM GENERATION:
+--------------------------------
+For real-time applications, you would:
+1. Capture RF signals (I/Q samples)
+2. Apply the same FFT and windowing
+3. Generate spectrogram in real-time
+4. Feed to trained CNN for classification
+
+EXAMPLE WORKFLOW:
+----------------
+1. Capture RF signal → I/Q samples
+2. Apply FFT with Hanning window
+3. Generate spectrogram (1024x192 pixels)
+4. Normalize to -150dB to -50dB range
+5. Apply viridis colormap
+6. Save as PNG
+7. Feed to trained CNN for classification
+
+INTEGRATION WITH YOUR CNN:
+-------------------------
+The generated spectrograms can be:
+1. Used for training new models
+2. Fed to your trained CNN for real-time classification
+3. Processed in batches for inference
+
+The scripts provide everything needed to convert raw RF signals into the same format used for training your CNN model.

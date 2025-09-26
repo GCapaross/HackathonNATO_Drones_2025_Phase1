@@ -1,3 +1,14 @@
 # Datasets
 Datasets/*
 GitHubs/*/venv
+OurCNN/venv
+
+# All pdf's
+*.pdf
+
+# All csv's
+*.csv
+
+# All yaml's
+*.yaml
+

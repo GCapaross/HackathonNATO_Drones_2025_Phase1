@@ -1,0 +1,86 @@
+SPECTROGRAM LABELING EXPLANATION
+================================
+
+WHERE THE SPECTROGRAMS ARE LABELED:
+-----------------------------------
+
+The spectrograms in our dataset are already labeled! The labels are stored in separate .txt files that correspond to each spectrogram image.
+
+FILE STRUCTURE:
+---------------
+spectrogram_training_data_20220711/results/
+├── result_frame_138769090412766230_bw_25E+6.png    # Spectrogram image
+├── result_frame_138769090412766230_bw_25E+6.txt    # YOLO labels
+├── result_frame_138769090412766230_bw_25E+6_marked.png  # Image with labels overlaid
+├── result_frame_138769090412766231_bw_25E+6.png    # Another spectrogram
+├── result_frame_138769090412766231_bw_25E+6.txt    # Its labels
+└── ...
+
+LABEL FORMAT (YOLO FORMAT):
+---------------------------
+Each .txt file contains lines like:
+0 0.023258 0.95 0.016187 0.1
+0 0.04172 0.5 0.051654 0.8
+1 0.14761 0.3 0.009156 0.4
+2 0.118957 0.5 0.0364 0.04
+
+FORMAT EXPLANATION:
+------------------
+- First number: Class ID (0=Background, 1=WLAN, 2=Bluetooth, 3=BLE)
+- Next 4 numbers: Bounding box coordinates (x_center, y_center, width, height) - all normalized 0-1
+
+WHAT THIS MEANS:
+---------------
+1. Each spectrogram image (.png) has a corresponding label file (.txt)
+2. The label file contains all the signal regions detected in that spectrogram
+3. Each line represents one signal region with its class and location
+4. The _marked.png files show the spectrogram with the labels overlaid as bounding boxes
+
+HOW OUR MODEL USES THIS:
+-----------------------
+1. Training: We load both the image and its corresponding .txt file
+2. Data loader: Extracts the primary class from all the labels in the file
+3. Model learns: To classify spectrograms based on these pre-existing labels
+
+CLASS MAPPING:
+--------------
+- Class 0: Background/Noise
+- Class 1: WLAN (WiFi signals)
+- Class 2: Bluetooth Classic
+- Class 3: BLE (Bluetooth Low Energy)
+
+EXAMPLE LABEL FILES:
+-------------------
+File: result_frame_138769090412766230_bw_25E+6.txt
+Content: 0 0.531987 0.75 0.936026 0.5
+Meaning: One background signal region
+
+File: result_frame_138769090412766231_bw_25E+6.txt
+Content:
+0 0.047778 0.5 0.053903 0.8
+0 0.081907 0.5 0.009965 0.8
+2 0.118957 0.5 0.0364 0.04
+0 0.166739 0.5 0.05392 0.8
+1 0.181021 0.5 0.025346 0.8
+Meaning: Multiple signal regions including background (0), Bluetooth (2), and WLAN (1)
+
+TRAINING WORKFLOW:
+-----------------
+1. Load spectrogram image (.png)
+2. Load corresponding label file (.txt)
+3. Extract primary class from all labels in the file
+4. Train CNN to classify spectrograms based on these labels
+5. Model learns to recognize patterns in spectrograms that correspond to different signal types
+
+INFERENCE WORKFLOW:
+------------------
+1. Input: New spectrogram image (without labels)
+2. Model predicts: What type of signals are present
+3. Output: Classification result (WLAN, Bluetooth, Background, etc.)
+
+SUMMARY:
+--------
+The spectrograms ARE already labeled - the labels exist in the .txt files! 
+Our model is learning from this pre-labeled data to classify new spectrograms.
+The dataset contains 20,000+ labeled spectrogram images with their corresponding 
+YOLO format annotations, so no manual labeling is needed for training.
