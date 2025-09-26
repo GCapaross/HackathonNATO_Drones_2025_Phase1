@@ -218,13 +218,19 @@ class CNNTrainer:
                 all_labels.extend(labels.cpu().numpy())
         
         # Classification report
+        # Get unique classes present in predictions and labels
+        unique_labels = sorted(list(set(all_labels + all_predictions)))
+        target_names_subset = [self.class_names[i] for i in unique_labels]
+        
         report = classification_report(all_labels, all_predictions, 
-                                     target_names=self.class_names, 
+                                     target_names=target_names_subset,
+                                     labels=unique_labels,
                                      output_dict=True)
         
         print("Classification Report:")
         print(classification_report(all_labels, all_predictions, 
-                                   target_names=self.class_names))
+                                   target_names=target_names_subset,
+                                   labels=unique_labels))
         
         # Confusion matrix
         cm = confusion_matrix(all_labels, all_predictions)

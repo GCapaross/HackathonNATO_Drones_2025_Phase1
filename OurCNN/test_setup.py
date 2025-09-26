@@ -124,11 +124,11 @@ def test_device():
     print("\nTesting device availability...")
     
     if torch.cuda.is_available():
-        print(f"✓ CUDA available: {torch.cuda.get_device_name(0)}")
-        print(f"✓ CUDA version: {torch.version.cuda}")
-        print(f"✓ GPU memory: {torch.cuda.get_device_properties(0).total_memory / 1e9:.1f} GB")
+        print(f"CUDA available: {torch.cuda.get_device_name(0)}")
+        print(f"CUDA version: {torch.version.cuda}")
+        print(f"GPU memory: {torch.cuda.get_device_properties(0).total_memory / 1e9:.1f} GB")
     else:
-        print("⚠ CUDA not available, will use CPU")
+        print("CUDA not available, will use CPU")
     
     return True
 
@@ -151,7 +151,7 @@ def test_training_setup():
         
         # Test trainer creation
         trainer = CNNTrainer(model, train_loader, val_loader, class_names, device='cpu')
-        print(f"✓ Trainer created successfully")
+        print(f"Trainer created successfully")
         
         # Test one training step
         trainer.model.train()
@@ -159,13 +159,13 @@ def test_training_setup():
             images, labels = images.to('cpu'), labels.to('cpu')
             outputs = trainer.model(images)
             loss = trainer.criterion(outputs, labels)
-            print(f"✓ Training step successful, loss: {loss.item():.4f}")
+            print(f"Training step successful, loss: {loss.item():.4f}")
             break
         
         return True
         
     except Exception as e:
-        print(f"✗ Training setup failed: {e}")
+        print(f"Training setup failed: {e}")
         return False
 
 def main():
@@ -207,7 +207,7 @@ def main():
     print(f"\nPassed: {passed}/{len(results)} tests")
     
     if passed == len(results):
-        print("\n🎉 All tests passed! Ready to start training.")
+        print("\nAll tests passed! Ready to start training.")
         print("\nNext steps:")
         print("1. Run: python train_cnn.py --epochs 10")
         print("2. Check training progress and results")

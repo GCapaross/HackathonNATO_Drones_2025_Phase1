@@ -82,10 +82,26 @@ class SpectrogramDataset(Dataset):
         if not labels:
             return 0  # Background if no labels
         
-        # Get the most frequent class ID (primary signal type)
+        # Get class IDs and their counts
         class_ids = [label[0] for label in labels]
         from collections import Counter
-        most_common = Counter(class_ids).most_common(1)[0][0]
+        class_counts = Counter(class_ids)
+        
+        # Strategy: If there are any non-background signals, prioritize them
+        # Otherwise, use the most frequent class
+        non_background_classes = [cid for cid in class_counts.keys() if cid != 0]
+        
+        if non_background_classes:
+            # If there are non-background signals, use the most frequent one
+            most_common = Counter(class_ids).most_common(1)[0][0]
+            # But if background is more frequent, still prefer non-background
+            if most_common == 0 and len(non_background_classes) > 0:
+                # Get the most frequent non-background class
+                non_bg_counts = {k: v for k, v in class_counts.items() if k != 0}
+                most_common = max(non_bg_counts, key=non_bg_counts.get)
+        else:
+            # Only background signals
+            most_common = 0
         
         # Debug: print class distribution for first few samples
         if hasattr(self, '_debug_count'):
@@ -94,7 +110,7 @@ class SpectrogramDataset(Dataset):
             self._debug_count = 1
             
         if self._debug_count <= 5:  # Print first 5 samples
-            print(f"Sample {self._debug_count}: Classes {class_ids} -> Primary: {most_common}")
+            print(f"Sample {self._debug_count}: Classes {class_ids} -> Primary: {most_common} (Counts: {dict(class_counts)})")
         
         return most_common
 
@@ -127,7 +143,7 @@ def create_data_loaders(data_dir, batch_size=32, test_size=0.2, task='classifica
         ])
     
     # Load image and label paths
-    results_dir = os.path.join(data_dir, 'spectrogram_training_data_20220711', 'results')
+    results_dir = os.path.join(data_dir, 'results')
     
     # Get all PNG files (excluding marked ones)
     image_files = glob.glob(os.path.join(results_dir, '*.png'))
