@@ -411,6 +411,7 @@ def train(net, device, semantic_dims, lr, batch_size, margin, num_known_class, m
 
 
 if __name__ == "__main__":
+
     tips = '(xyz_for_loss_curve)'
     my_index = 1
     len_time = 1
@@ -424,7 +425,16 @@ if __name__ == "__main__":
         os.makedirs('./model/S3R/')
     if not os.path.exists('./semantic/S3R/'):
         os.makedirs('./semantic/S3R/')    
-    device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+    print("Checking CUDA availability...")
+    print(f"CUDA available: {torch.cuda.is_available()}")
+    if torch.cuda.is_available():
+        print(f"CUDA device count: {torch.cuda.device_count()}")
+        print(f"Current CUDA device: {torch.cuda.current_device()}")
+        print(f"CUDA device name: {torch.cuda.get_device_name()}")
+    
+    # Set device
+    device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+    print(f"Using device: {device}")
     Net = NET(in_channels=1, input_size=[int(512 * len_time), 512], semantic_dim=semantic_dim,
               num_class=num_known, device=device).to(device)
     train(net=Net, device=device, semantic_dims=semantic_dim, lr=1e-4, batch_size=32
