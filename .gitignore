@@ -12,3 +12,5 @@ OurCNN/venv
 # All yaml's
 *.yaml
 
+csv_files_dataset/*
+
