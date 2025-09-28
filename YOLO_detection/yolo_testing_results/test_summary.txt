@@ -1,0 +1,49 @@
+=== YOLO Model Test Summary ===
+Test Date: 2025-09-28 15:23:34
+Model: yolo_training/rf_detection/weights/best.pt
+Confidence Threshold: 0.5
+Total Images Tested: 30
+
+=== Individual Test Results ===
+Test# | Image | Model Detections | YOLO Labels | Detection Ratio
+----------------------------------------------------------------------
+    1 | result_frame_1387691 |              14 |          22 |            0.64
+    2 | result_frame_1387692 |              21 |          27 |            0.78
+    3 | result_frame_1387691 |              22 |          25 |            0.88
+    4 | result_frame_1387691 |               0 |           0 |            0.00
+    5 | result_frame_1387692 |              18 |          27 |            0.67
+    6 | result_frame_1387692 |               0 |          27 |            0.00
+    7 | result_frame_1387691 |              15 |          22 |            0.68
+    8 | result_frame_1387692 |              16 |          23 |            0.70
+    9 | result_frame_1387692 |              18 |          26 |            0.69
+   10 | result_frame_1387691 |              22 |          23 |            0.96
+   11 | result_frame_1387692 |              19 |          23 |            0.83
+   12 | result_frame_1387691 |              19 |          28 |            0.68
+   13 | result_frame_1387691 |              21 |          26 |            0.81
+   14 | result_frame_1387691 |              16 |          24 |            0.67
+   15 | result_frame_1387691 |              18 |          24 |            0.75
+   16 | result_frame_1387692 |              19 |          23 |            0.83
+   17 | result_frame_1387691 |              16 |          25 |            0.64
+   18 | result_frame_1387692 |              20 |          25 |            0.80
+   19 | result_frame_1387692 |              11 |          22 |            0.50
+   20 | result_frame_1387692 |              18 |          22 |            0.82
+   21 | result_frame_1387691 |              17 |          22 |            0.77
+   22 | result_frame_1387691 |              17 |          23 |            0.74
+   23 | result_frame_1387691 |               1 |           1 |            1.00
+   24 | result_frame_1387691 |              21 |          27 |            0.78
+   25 | result_frame_1387692 |              20 |          28 |            0.71
+   26 | result_frame_1387692 |              19 |          24 |            0.79
+   27 | result_frame_1387691 |              17 |          22 |            0.77
+   28 | result_frame_1387692 |              18 |          22 |            0.82
+   29 | result_frame_1387691 |              24 |          28 |            0.86
+   30 | result_frame_1387690 |              17 |          23 |            0.74
+
+=== Summary Statistics ===
+Total Model Detections: 494
+Total YOLO Labels: 684
+Average Model Detections per Image: 16.47
+Average YOLO Labels per Image: 22.80
+Overall Detection Ratio: 0.72
+
+=== Analysis Notes ===
+Model appears to be making reasonable detections.

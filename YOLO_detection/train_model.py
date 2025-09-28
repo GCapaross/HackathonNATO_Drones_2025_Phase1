@@ -1,0 +1,295 @@
+"""
+Train YOLO Model for RF Signal Detection
+Simple script to train YOLO using Ultralytics YOLOv8
+"""
+
+import torch
+from ultralytics import YOLO
+import os
+import yaml
+import shutil
+from pathlib import Path
+import pandas as pd
+from datetime import datetime
+
+def setup_dataset():
+    """Setup dataset for YOLO training"""
+    print("=== Setting up dataset ===")
+    
+    # Create dataset directories
+    os.makedirs('datasets/train/images', exist_ok=True)
+    os.makedirs('datasets/train/labels', exist_ok=True)
+    os.makedirs('datasets/val/images', exist_ok=True)
+    os.makedirs('datasets/val/labels', exist_ok=True)
+    
+    # Get all image files from the dataset
+    results_dir = '../spectrogram_training_data_20220711/results'
+    image_files = []
+    for ext in ['*.png']:
+        image_files.extend(Path(results_dir).glob(ext))
+    
+    # Filter out marked images
+    image_files = [f for f in image_files if 'marked' not in str(f)]
+    
+    print(f"Found {len(image_files)} images to process")
+    
+    # Split into train/val (80/20)
+    split_idx = int(len(image_files) * 0.8)
+    train_files = image_files[:split_idx]
+    val_files = image_files[split_idx:]
+    
+    # Process training files
+    print("Processing training files...")
+    for i, img_path in enumerate(train_files):
+        if i % 1000 == 0:
+            print(f"  {i}/{len(train_files)}")
+        
+        # Copy image
+        dst_img = f'datasets/train/images/{img_path.name}'
+        shutil.copy2(img_path, dst_img)
+        
+        # Copy label (if exists)
+        label_path = img_path.with_suffix('.txt')
+        if label_path.exists():
+            dst_label = f'datasets/train/labels/{label_path.name}'
+            shutil.copy2(label_path, dst_label)
+    
+    # Process validation files
+    print("Processing validation files...")
+    for i, img_path in enumerate(val_files):
+        if i % 1000 == 0:
+            print(f"  {i}/{len(val_files)}")
+        
+        # Copy image
+        dst_img = f'datasets/val/images/{img_path.name}'
+        shutil.copy2(img_path, dst_img)
+        
+        # Copy label (if exists)
+        label_path = img_path.with_suffix('.txt')
+        if label_path.exists():
+            dst_label = f'datasets/val/labels/{label_path.name}'
+            shutil.copy2(label_path, dst_label)
+    
+    print(f"Dataset setup complete:")
+    print(f"  Training: {len(train_files)} images")
+    print(f"  Validation: {len(val_files)} images")
+
+def create_dataset_config():
+    """Create YOLO dataset configuration"""
+    dataset_config = {
+        'path': os.path.abspath('.'),
+        'train': 'datasets/train',
+        'val': 'datasets/val',
+        'nc': 3,  # Number of classes
+        'names': ['Background', 'WLAN', 'Bluetooth']
+    }
+    
+    with open('dataset.yaml', 'w') as f:
+        yaml.dump(dataset_config, f, default_flow_style=False)
+    
+    print("Created dataset.yaml configuration")
+    return 'dataset.yaml'
+
+def save_training_results(results, training_dir):
+    """Save training results to a comprehensive document"""
+    timestamp = datetime.now().strftime('%Y-%m-%d_%H-%M-%S')
+    
+    # Create results document
+    results_doc = f"training_results_{timestamp}.md"
+    results_path = os.path.join(training_dir, results_doc)
+    
+    # Get training metrics from results.csv if it exists
+    csv_path = os.path.join(training_dir, 'results.csv')
+    metrics_data = None
+    if os.path.exists(csv_path):
+        try:
+            metrics_data = pd.read_csv(csv_path)
+            print(f"Loaded training metrics from {csv_path}")
+        except Exception as e:
+            print(f"Could not load metrics CSV: {e}")
+    
+    with open(results_path, 'w') as f:
+        f.write(f"# YOLO Training Results - {timestamp}\n\n")
+        
+        # Training configuration
+        f.write("## Training Configuration\n")
+        f.write(f"- **Model**: YOLOv8n (nano)\n")
+        f.write(f"- **Dataset**: RF Signal Detection\n")
+        f.write(f"- **Classes**: Background, WLAN, Bluetooth\n")
+        f.write(f"- **Device**: {'CUDA' if torch.cuda.is_available() else 'CPU'}\n")
+        f.write(f"- **Image Size**: 640x640\n")
+        f.write(f"- **Batch Size**: 16\n")
+        f.write(f"- **Training Date**: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n\n")
+        
+        # Model files
+        f.write("## Model Files\n")
+        f.write(f"- **Best Model**: {training_dir}/weights/best.pt\n")
+        f.write(f"- **Last Model**: {training_dir}/weights/last.pt\n")
+        f.write(f"- **Training Logs**: {training_dir}/results.csv\n")
+        f.write(f"- **Training Plots**: {training_dir}/labels.jpg, train_batch*.jpg\n\n")
+        
+        # Training metrics
+        if metrics_data is not None:
+            f.write("## Training Metrics Summary\n\n")
+            
+            # Get final epoch metrics
+            final_epoch = metrics_data.iloc[-1]
+            
+            f.write("### Final Epoch Results\n")
+            f.write(f"- **Epoch**: {final_epoch['epoch']}\n")
+            f.write(f"- **Training Box Loss**: {final_epoch['train/box_loss']:.4f}\n")
+            f.write(f"- **Training Class Loss**: {final_epoch['train/cls_loss']:.4f}\n")
+            f.write(f"- **Training DFL Loss**: {final_epoch['train/dfl_loss']:.4f}\n")
+            f.write(f"- **Validation Box Loss**: {final_epoch['val/box_loss']:.4f}\n")
+            f.write(f"- **Validation Class Loss**: {final_epoch['val/cls_loss']:.4f}\n")
+            f.write(f"- **Validation DFL Loss**: {final_epoch['val/dfl_loss']:.4f}\n\n")
+            
+            f.write("### Detection Metrics\n")
+            f.write(f"- **Precision**: {final_epoch['metrics/precision(B)']:.4f}\n")
+            f.write(f"- **Recall**: {final_epoch['metrics/recall(B)']:.4f}\n")
+            f.write(f"- **mAP@50**: {final_epoch['metrics/mAP50(B)']:.4f}\n")
+            f.write(f"- **mAP@50-95**: {final_epoch['metrics/mAP50-95(B)']:.4f}\n\n")
+            
+            # Training progress
+            f.write("### Training Progress\n")
+            f.write("| Epoch | Train Box Loss | Train Cls Loss | Val Box Loss | Val Cls Loss | mAP@50 |\n")
+            f.write("|-------|----------------|----------------|--------------|--------------|--------|\n")
+            
+            for _, row in metrics_data.iterrows():
+                f.write(f"| {int(row['epoch'])} | {row['train/box_loss']:.4f} | {row['train/cls_loss']:.4f} | {row['val/box_loss']:.4f} | {row['val/cls_loss']:.4f} | {row['metrics/mAP50(B)']:.4f} |\n")
+            
+            f.write("\n")
+            
+            # Loss trends
+            f.write("### Loss Trends\n")
+            f.write("- **Training Loss**: Started at {:.4f}, ended at {:.4f}\n".format(
+                metrics_data['train/box_loss'].iloc[0], 
+                metrics_data['train/box_loss'].iloc[-1]
+            ))
+            f.write("- **Validation Loss**: Started at {:.4f}, ended at {:.4f}\n".format(
+                metrics_data['val/box_loss'].iloc[0], 
+                metrics_data['val/box_loss'].iloc[-1]
+            ))
+            f.write("- **mAP@50**: Started at {:.4f}, ended at {:.4f}\n".format(
+                metrics_data['metrics/mAP50(B)'].iloc[0], 
+                metrics_data['metrics/mAP50(B)'].iloc[-1]
+            ))
+            f.write("\n")
+            
+            # Analysis
+            f.write("### Training Analysis\n")
+            if final_epoch['metrics/mAP50(B)'] > 0.5:
+                f.write("- **Good Performance**: mAP@50 > 0.5 indicates good detection capability\n")
+            elif final_epoch['metrics/mAP50(B)'] > 0.3:
+                f.write("- **Moderate Performance**: mAP@50 between 0.3-0.5, may need more training\n")
+            else:
+                f.write("- **Poor Performance**: mAP@50 < 0.3, model may need significant improvements\n")
+            
+            if final_epoch['metrics/precision(B)'] > 0.7:
+                f.write("- **Good Precision**: Low false positive rate\n")
+            else:
+                f.write("- **Low Precision**: High false positive rate, may need better training data\n")
+            
+            if final_epoch['metrics/recall(B)'] > 0.7:
+                f.write("- **Good Recall**: Low false negative rate\n")
+            else:
+                f.write("- **Low Recall**: High false negative rate, may miss many objects\n")
+        
+        f.write("\n## Next Steps\n")
+        f.write("1. Test the model using: `python3 test_model.py`\n")
+        f.write("2. Analyze test results in `yolo_testing_results/` folder\n")
+        f.write("3. If performance is poor, consider:\n")
+        f.write("   - More training epochs\n")
+        f.write("   - Data augmentation\n")
+        f.write("   - Different model architecture\n")
+        f.write("   - Better data preprocessing\n")
+    
+    print(f"Training results saved to: {results_path}")
+    return results_path
+
+def train_model():
+    """Train the YOLO model"""
+    print("=== Training YOLO Model ===")
+    
+    # Setup dataset
+    setup_dataset()
+    
+    # Create dataset config
+    dataset_yaml = create_dataset_config()
+    
+    # Load YOLO model (nano version for faster training)
+    model = YOLO('yolov8n.pt')
+    
+    # Train the model
+    print("Starting training...")
+    results = model.train(
+        data=dataset_yaml,
+        epochs=50,
+        imgsz=640,
+        batch=16,
+        device='cuda' if torch.cuda.is_available() else 'cpu',
+        project='yolo_training',
+        name='rf_detection',
+        save=True,
+        plots=True,
+        verbose=True
+    )
+    
+    print("Training completed!")
+    
+    # Save comprehensive training results
+    training_dir = 'yolo_training/rf_detection'
+    results_doc_path = save_training_results(results, training_dir)
+    
+    return model, results_doc_path
+
+def main():
+    """Main function"""
+    print("=== YOLO RF Signal Detection Training ===")
+    print("Using Ultralytics YOLOv8")
+    
+    # Check if model already exists
+    if os.path.exists('yolo_training/rf_detection/weights/best.pt'):
+        print("Found existing trained model!")
+        print("Model location: yolo_training/rf_detection/weights/best.pt")
+        
+        # Check if we want to resume training or create results document
+        response = input("Do you want to resume training? (y/n): ").lower().strip()
+        if response == 'y':
+            print("Resuming training from existing model...")
+            model = YOLO('yolo_training/rf_detection/weights/best.pt')
+            
+            # Continue training
+            results = model.train(
+                data='dataset.yaml',
+                epochs=50,
+                imgsz=640,
+                batch=16,
+                device='cuda' if torch.cuda.is_available() else 'cpu',
+                project='yolo_training',
+                name='rf_detection',
+                save=True,
+                plots=True,
+                verbose=True,
+                resume=True  # Resume from existing model
+            )
+            
+            # Save results for resumed training
+            training_dir = 'yolo_training/rf_detection'
+            results_doc_path = save_training_results(results, training_dir)
+            print("Resumed training completed!")
+            return
+        else:
+            print("Skipping training. You can test the existing model with: python3 test_model.py")
+            return
+    
+    # Train new model
+    model, results_doc_path = train_model()
+    
+    print("\n=== Training Complete ===")
+    print("Model saved to: yolo_training/rf_detection/weights/best.pt")
+    print("Training plots saved to: yolo_training/rf_detection/")
+    print(f"Training results document: {results_doc_path}")
+
+if __name__ == "__main__":
+    main()
