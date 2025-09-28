@@ -48,16 +48,19 @@ class SpectrogramDataset(Dataset):
         
         # Load labels
         label_path = self.label_paths[idx]
+        
+        # Extract filename for frequency info
+        filename = os.path.basename(image_path)
         labels = self.load_yolo_labels(label_path)
         
         if self.task == 'classification':
-            # For classification: return image and single class label
+            # For classification: return image, single class label, and filename
             class_label = self.extract_class_labels(labels)
-            return image, torch.tensor(class_label, dtype=torch.long)
+            return image, torch.tensor(class_label, dtype=torch.long), filename
         
         elif self.task == 'detection':
-            # For detection: return image and bounding boxes
-            return image, labels
+            # For detection: return image, bounding boxes, and filename
+            return image, labels, filename
     
     def load_yolo_labels(self, label_path):
         """Load YOLO format labels from text file"""

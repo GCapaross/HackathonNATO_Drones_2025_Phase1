@@ -12,5 +12,30 @@ OurCNN/venv
 # All yaml's
 *.yaml
 
+
+
+# Large datasets and model files
+spectrogram_training_data_20220711/
+spectrogram_training_data_20220711.zip
+GitHubs/S3R-main/model/S3R/group_1_margin_8_dim_128_length_1_gamma_0.75_tips_(xyz_for_loss_curve).pkl
+
+# YOLO datasets (large image collections)
+YOLO_detection/datasets/
+
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+
+# Virtual environments
+YOLO_detection/venv/
+venv/
+env/
+.env
+
+
 csv_files_dataset/*
+
 

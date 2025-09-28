@@ -1,0 +1,29 @@
+=== YOLO Model Test Summary ===
+Test Date: 2025-09-28 19:02:53
+Model: yolo_training2/rf_detection/weights/best.pt
+Confidence Threshold: 0.5
+Total Images Tested: 10
+
+=== Individual Test Results ===
+Test# | Image | Model Detections | YOLO Labels | Detection Ratio
+----------------------------------------------------------------------
+    1 | result_frame_1387691 |              18 |          25 |            0.72
+    2 | result_frame_1387692 |              19 |          24 |            0.79
+    3 | result_frame_1387692 |              14 |          22 |            0.64
+    4 | result_frame_1387691 |              15 |          24 |            0.62
+    5 | result_frame_1387691 |              17 |          24 |            0.71
+    6 | result_frame_1387691 |              23 |          26 |            0.88
+    7 | result_frame_1387692 |              19 |          22 |            0.86
+    8 | result_frame_1387692 |              19 |          28 |            0.68
+    9 | result_frame_1387691 |              21 |          25 |            0.84
+   10 | result_frame_1387691 |              18 |          22 |            0.82
+
+=== Summary Statistics ===
+Total Model Detections: 183
+Total YOLO Labels: 242
+Average Model Detections per Image: 18.30
+Average YOLO Labels per Image: 24.20
+Overall Detection Ratio: 0.76
+
+=== Analysis Notes ===
+Model appears to be making reasonable detections.
