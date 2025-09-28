@@ -8,7 +8,7 @@ from typing import List
 
 import pandas as pd
 
-from directory_manager import DirectoryManager
+from spectrogram_images.directory_manager import DirectoryManager
 
 
 @dataclass
