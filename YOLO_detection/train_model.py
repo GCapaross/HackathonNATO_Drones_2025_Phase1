@@ -3,14 +3,22 @@ Train YOLO Model for RF Signal Detection
 Simple script to train YOLO using Ultralytics YOLOv8
 """
 
+import os
+# Set CUDA environment before importing PyTorch
+os.environ['CUDA_VISIBLE_DEVICES'] = '0'
+
 import torch
 from ultralytics import YOLO
-import os
 import yaml
 import shutil
 from pathlib import Path
 import pandas as pd
 from datetime import datetime
+import numpy as np
+# import matplotlib.pyplot as plt
+# import seaborn as sns
+# from sklearn.metrics import confusion_matrix
+import random
 
 def setup_dataset():
     """Setup dataset for YOLO training"""
@@ -207,9 +215,95 @@ def save_training_results(results, training_dir):
     print(f"Training results saved to: {results_path}")
     return results_path
 
+# def create_confusion_matrix_during_training(model, training_dir):
+#     """Create confusion matrix by running model on validation data during training"""
+#     try:
+#         print("Creating confusion matrix from validation data...")
+#         
+#         # Get validation images
+#         val_images = list(Path('datasets/val/images').glob('*.png'))
+#         if len(val_images) == 0:
+#             print("No validation images found for confusion matrix")
+#             return None
+#         
+#         # Sample some validation images (not all to avoid memory issues)
+#         sample_size = min(100, len(val_images))
+#         val_images = random.sample(val_images, sample_size)
+#         
+#         all_true_labels = []
+#         all_pred_labels = []
+#         
+#         for img_path in val_images:
+#             # Get predictions
+#             results = model(str(img_path), conf=0.5)
+#             result = results[0]
+#             
+#             # Collect predictions
+#             if result.boxes is not None and len(result.boxes) > 0:
+#                 for box in result.boxes:
+#                     pred_class = int(box.cls.item())
+#                     all_pred_labels.append(pred_class)
+#             
+#             # Collect ground truth labels
+#             label_path = img_path.with_suffix('.txt')
+#             if label_path.exists():
+#                 with open(label_path, 'r') as f:
+#                     for line in f:
+#                         parts = line.strip().split()
+#                         if len(parts) >= 5:
+#                             true_class = int(parts[0])
+#                             all_true_labels.append(true_class)
+#         
+#         if len(all_true_labels) == 0 or len(all_pred_labels) == 0:
+#             print("No labels found for confusion matrix")
+#             return None
+#         
+#         # Create confusion matrix
+#         class_names = ['Background', 'WLAN', 'Bluetooth', 'BLE']
+#         cm = confusion_matrix(all_true_labels, all_pred_labels)
+#         
+#         # Create plot
+#         plt.figure(figsize=(10, 8))
+#         sns.heatmap(cm, annot=True, fmt='d', cmap='Blues', 
+#                    xticklabels=class_names, yticklabels=class_names)
+#         plt.title('Confusion Matrix - Training Validation')
+#         plt.xlabel('Predicted Class')
+#         plt.ylabel('True Class')
+#         
+#         # Save confusion matrix
+#         cm_path = os.path.join(training_dir, 'confusion_matrix_training.png')
+#         plt.savefig(cm_path, dpi=300, bbox_inches='tight')
+#         plt.close()
+#         
+#         print(f"Confusion matrix saved to: {cm_path}")
+#         print(f"Matrix created with {len(all_true_labels)} ground truth and {len(all_pred_labels)} predictions")
+#         return cm_path
+#         
+#     except Exception as e:
+#         print(f"Could not create confusion matrix during training: {e}")
+#         return None
+
+def check_cuda_usage():
+    """Check current CUDA usage and memory"""
+    if torch.cuda.is_available():
+        allocated = torch.cuda.memory_allocated(0) / 1024**3
+        cached = torch.cuda.memory_reserved(0) / 1024**3
+        total = torch.cuda.get_device_properties(0).total_memory / 1024**3
+        print(f"GPU Memory: {allocated:.2f}GB allocated, {cached:.2f}GB cached, {total:.1f}GB total")
+        return True
+    return False
+
 def train_model():
     """Train the YOLO model"""
     print("=== Training YOLO Model ===")
+    
+    # Check CUDA availability
+    if torch.cuda.is_available():
+        device = 'cuda'
+        print(f"Using GPU: {torch.cuda.get_device_name(0)}")
+    else:
+        device = 'cpu'
+        print("Using CPU")
     
     # Setup dataset
     setup_dataset()
@@ -218,6 +312,7 @@ def train_model():
     dataset_yaml = create_dataset_config()
     
     # Load YOLO model (nano version for faster training)
+    print("Loading YOLO model...")
     model = YOLO('yolov8n.pt')
     
     # Train the model
@@ -227,8 +322,8 @@ def train_model():
         epochs=50,
         imgsz=640,
         batch=16,
-        device='cuda' if torch.cuda.is_available() else 'cpu',
-        project='yolo_training',
+        device=device,
+        project='yolo_training2',
         name='rf_detection',
         save=True,
         plots=True,
@@ -237,27 +332,42 @@ def train_model():
     
     print("Training completed!")
     
+    # Create confusion matrix during training (commented out for speed)
+    training_dir = 'yolo_training2/rf_detection'
+    # cm_path = create_confusion_matrix_during_training(model, training_dir)
+    
     # Save comprehensive training results
-    training_dir = 'yolo_training/rf_detection'
     results_doc_path = save_training_results(results, training_dir)
     
     return model, results_doc_path
 
 def main():
     """Main function"""
+    # Set CUDA environment before any PyTorch operations
+    os.environ['CUDA_VISIBLE_DEVICES'] = '0'
+    
     print("=== YOLO RF Signal Detection Training ===")
-    print("Using Ultralytics YOLOv8")
     
     # Check if model already exists
-    if os.path.exists('yolo_training/rf_detection/weights/best.pt'):
+    if os.path.exists('yolo_training2/rf_detection/weights/best.pt'):
         print("Found existing trained model!")
-        print("Model location: yolo_training/rf_detection/weights/best.pt")
+        print("Model location: yolo_training2/rf_detection/weights/best.pt")
         
         # Check if we want to resume training or create results document
         response = input("Do you want to resume training? (y/n): ").lower().strip()
         if response == 'y':
             print("Resuming training from existing model...")
-            model = YOLO('yolo_training/rf_detection/weights/best.pt')
+            # Force CUDA environment before loading model
+            os.environ['CUDA_VISIBLE_DEVICES'] = '0'
+            model = YOLO('yolo_training2/rf_detection/weights/best.pt')
+            
+            # Check device
+            if torch.cuda.is_available():
+                device = 'cuda'
+                print(f"Resuming with GPU: {torch.cuda.get_device_name(0)}")
+            else:
+                device = 'cpu'
+                print("Resuming with CPU")
             
             # Continue training
             results = model.train(
@@ -265,8 +375,8 @@ def main():
                 epochs=50,
                 imgsz=640,
                 batch=16,
-                device='cuda' if torch.cuda.is_available() else 'cpu',
-                project='yolo_training',
+                device=device,
+                project='yolo_training2',
                 name='rf_detection',
                 save=True,
                 plots=True,
@@ -275,7 +385,7 @@ def main():
             )
             
             # Save results for resumed training
-            training_dir = 'yolo_training/rf_detection'
+            training_dir = 'yolo_training2/rf_detection'
             results_doc_path = save_training_results(results, training_dir)
             print("Resumed training completed!")
             return
@@ -287,8 +397,8 @@ def main():
     model, results_doc_path = train_model()
     
     print("\n=== Training Complete ===")
-    print("Model saved to: yolo_training/rf_detection/weights/best.pt")
-    print("Training plots saved to: yolo_training/rf_detection/")
+    print("Model saved to: yolo_training2/rf_detection/weights/best.pt")
+    print("Training plots saved to: yolo_training2/rf_detection/")
     print(f"Training results document: {results_doc_path}")
 
 if __name__ == "__main__":

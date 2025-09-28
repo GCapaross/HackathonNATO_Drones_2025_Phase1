@@ -12,72 +12,10 @@ import numpy as np
 from sklearn.metrics import confusion_matrix
 import seaborn as sns
 
-def create_confusion_matrix_plot(metrics_data, training_dir):
-    """Create confusion matrix plot from training data"""
-    try:
-        # Create a simple confusion matrix based on class distribution
-        # This is a simplified version since we don't have per-class predictions from YOLO training
-        
-        # Get class distribution from the dataset analysis
-        class_names = ['Background', 'WLAN', 'Bluetooth', 'BLE']
-        
-        # Create a mock confusion matrix based on class distribution
-        # In real scenario, this would come from validation predictions
-        total_samples = 1000  # Mock total samples
-        
-        # Simulate confusion matrix based on mAP and precision metrics
-        final_epoch = metrics_data.iloc[-1]
-        precision = final_epoch['metrics/precision(B)']
-        recall = final_epoch['metrics/recall(B)']
-        
-        # Create mock confusion matrix (simplified)
-        # Background (majority class)
-        bg_correct = int(total_samples * 0.71 * recall)  # 71% of data is background
-        bg_incorrect = int(total_samples * 0.71 * (1 - recall))
-        
-        # WLAN
-        wlan_correct = int(total_samples * 0.16 * recall)  # 16% WLAN
-        wlan_incorrect = int(total_samples * 0.16 * (1 - recall))
-        
-        # Bluetooth
-        bt_correct = int(total_samples * 0.13 * recall)  # 13% Bluetooth
-        bt_incorrect = int(total_samples * 0.13 * (1 - recall))
-        
-        # BLE (0% in dataset)
-        ble_correct = 0
-        ble_incorrect = 0
-        
-        # Create confusion matrix
-        cm = np.array([
-            [bg_correct, wlan_incorrect, bt_incorrect, ble_incorrect],  # Background predictions
-            [bg_incorrect, wlan_correct, bt_incorrect, ble_incorrect],   # WLAN predictions  
-            [bg_incorrect, wlan_incorrect, bt_correct, ble_incorrect],  # Bluetooth predictions
-            [bg_incorrect, wlan_incorrect, bt_incorrect, ble_correct]   # BLE predictions
-        ])
-        
-        # Create confusion matrix plot
-        plt.figure(figsize=(10, 8))
-        sns.heatmap(cm, annot=True, fmt='d', cmap='Blues', 
-                   xticklabels=class_names, yticklabels=class_names)
-        plt.title('Confusion Matrix - YOLO Training Results')
-        plt.xlabel('Predicted Class')
-        plt.ylabel('True Class')
-        
-        # Save confusion matrix
-        cm_path = os.path.join(training_dir, 'confusion_matrix.png')
-        plt.savefig(cm_path, dpi=300, bbox_inches='tight')
-        plt.close()
-        
-        print(f"Confusion matrix saved to: {cm_path}")
-        return cm_path
-        
-    except Exception as e:
-        print(f"Could not create confusion matrix: {e}")
-        return None
 
 def generate_training_report():
     """Generate training report from existing results"""
-    training_dir = 'yolo_training/rf_detection'
+    training_dir = 'yolo_training2/rf_detection'
     
     if not os.path.exists(training_dir):
         print("No training directory found!")
@@ -155,17 +93,19 @@ def generate_training_report():
         
         f.write("\n")
         
-        # Create confusion matrix
+        # Note about confusion matrix
         f.write("### Confusion Matrix\n")
-        cm_path = create_confusion_matrix_plot(metrics_data, training_dir)
-        if cm_path:
-            f.write(f"![Confusion Matrix]({os.path.basename(cm_path)})\n\n")
-            f.write("**Confusion Matrix Analysis:**\n")
-            f.write("- **Diagonal values**: Correct predictions for each class\n")
-            f.write("- **Off-diagonal values**: Misclassifications between classes\n")
-            f.write("- **Class distribution**: Based on dataset analysis (71% Background, 16% WLAN, 13% Bluetooth, 0% BLE)\n\n")
-        else:
-            f.write("Confusion matrix could not be generated.\n\n")
+        f.write("**Note**: YOLO training metrics do not include per-class confusion matrix data.\n")
+        f.write("The training process only saves aggregate metrics (mAP, precision, recall).\n")
+        f.write("To get a confusion matrix, you would need to:\n")
+        f.write("1. Run the model on validation data\n")
+        f.write("2. Collect predictions for each class\n")
+        f.write("3. Compare with ground truth labels\n\n")
+        f.write("**Available Metrics from Training:**\n")
+        f.write(f"- **Precision**: {final_epoch['metrics/precision(B)']:.4f}\n")
+        f.write(f"- **Recall**: {final_epoch['metrics/recall(B)']:.4f}\n")
+        f.write(f"- **mAP@50**: {final_epoch['metrics/mAP50(B)']:.4f}\n")
+        f.write(f"- **mAP@50-95**: {final_epoch['metrics/mAP50-95(B)']:.4f}\n\n")
         
         # Loss trends
         f.write("### Loss Trends\n")

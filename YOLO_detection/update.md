@@ -229,3 +229,36 @@ YOLO validation compares **each predicted bounding box** to **each ground truth 
 - Class imbalance remains a challenge but model should still detect signals
 - Seems to be classifying mostly as background
 - Need to test accuracy
+
+## Phase 6: Model Testing Results and Analysis
+
+### Test Results Summary
+After comprehensive testing with the enhanced test_model.py script, the following conclusions were reached:
+
+**Model Performance Issues Identified:**
+- **Overfitting towards Background class**: Model has learned to classify most regions as Background
+- **Difficulties detecting WLAN and Bluetooth signals**: Model struggles to identify actual RF signals
+- **Conservative detection behavior**: Model tends to predict "no objects" or "Background only" as the safest strategy
+
+### Root Cause Analysis
+**Class Imbalance Impact:**
+- Training data distribution: 71% Background vs 16% WLAN vs 13% Bluetooth
+- Model learned that predicting Background minimizes loss
+- This created a bias towards the majority class
+- Model adopted the strategy of "when in doubt, predict Background"
+
+**Detection Challenges:**
+- Model has difficulties finding WLAN and Bluetooth signals in spectrograms
+- Tendency to classify signal regions as Background
+- Learned to be overly conservative to avoid false positives
+- This is a common problem in imbalanced datasets
+
+### Recommendations for Improvement
+1. **Address class imbalance through weighted loss functions**
+2. **Implement data augmentation to balance class representation**
+3. **Use focal loss to focus on hard-to-detect classes**
+4. **Consider collecting more WLAN and Bluetooth training samples**
+5. **Adjust confidence thresholds for better detection sensitivity**
+
+### Key Learning
+The model's behavior demonstrates a classic case of class imbalance overfitting, where the model learns to predict the majority class (Background) as the safest strategy, leading to poor performance on the minority classes (WLAN, Bluetooth) that are actually the most important to detect.

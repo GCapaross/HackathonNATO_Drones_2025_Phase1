@@ -12,6 +12,8 @@ import numpy as np
 from PIL import Image
 import random
 from datetime import datetime
+from sklearn.metrics import confusion_matrix, classification_report
+import seaborn as sns
 
 def test_single_image(model_path, image_path, conf_threshold=0.5):
     """Test model on a single image"""
@@ -172,7 +174,7 @@ def create_enhanced_visualization(image_path, result, test_number):
     plt.subplots_adjust(bottom=0.1)
     
     # Save visualization
-    output_dir = "yolo_testing_results"
+    output_dir = "test_results2"
     os.makedirs(output_dir, exist_ok=True)
     
     base_name = os.path.splitext(os.path.basename(image_path))[0]
@@ -183,6 +185,32 @@ def create_enhanced_visualization(image_path, result, test_number):
     plt.show()
     
     return model_detections, yolo_detections
+
+def create_confusion_matrix_from_predictions(all_true_labels, all_pred_labels, class_names, output_dir):
+    """Create real confusion matrix from predictions"""
+    try:
+        # Create confusion matrix
+        cm = confusion_matrix(all_true_labels, all_pred_labels)
+        
+        # Create plot
+        plt.figure(figsize=(10, 8))
+        sns.heatmap(cm, annot=True, fmt='d', cmap='Blues', 
+                   xticklabels=class_names, yticklabels=class_names)
+        plt.title('Confusion Matrix - YOLO Model Performance')
+        plt.xlabel('Predicted Class')
+        plt.ylabel('True Class')
+        
+        # Save confusion matrix
+        cm_path = os.path.join(output_dir, 'confusion_matrix.png')
+        plt.savefig(cm_path, dpi=300, bbox_inches='tight')
+        plt.close()
+        
+        print(f"Confusion matrix saved to: {cm_path}")
+        return cm_path, cm
+        
+    except Exception as e:
+        print(f"Could not create confusion matrix: {e}")
+        return None, None
 
 def test_multiple_images(model_path, num_images=10, conf_threshold=0.5):
     """Test model on multiple images with enhanced analysis"""
@@ -209,6 +237,8 @@ def test_multiple_images(model_path, num_images=10, conf_threshold=0.5):
     total_model_detections = 0
     total_yolo_labels = 0
     test_results = []
+    all_true_labels = []
+    all_pred_labels = []
     
     for i, image_path in enumerate(selected_files):
         print(f"\n--- Test #{i+1}/{len(selected_files)} ---")
@@ -232,12 +262,34 @@ def test_multiple_images(model_path, num_images=10, conf_threshold=0.5):
             'detection_ratio': model_detections / max(yolo_detections, 1)
         })
         
+        # Collect predictions for confusion matrix
+        if result.boxes is not None and len(result.boxes) > 0:
+            for box in result.boxes:
+                pred_class = int(box.cls.item())
+                all_pred_labels.append(pred_class)
+        
+        # Collect ground truth labels
+        txt_path = image_path.replace('.png', '.txt')
+        yolo_labels = load_yolo_labels(txt_path)
+        for class_id, _, _, _, _ in yolo_labels:
+            all_true_labels.append(class_id)
+        
         print(f"Model detections: {model_detections}")
         print(f"YOLO labels: {yolo_detections}")
         print(f"Detection ratio: {model_detections / max(yolo_detections, 1):.2f}")
     
     # Create comprehensive test summary
     create_test_summary(test_results, model_path, conf_threshold, total_model_detections, total_yolo_labels)
+    
+    # Create confusion matrix if we have predictions
+    if len(all_true_labels) > 0 and len(all_pred_labels) > 0:
+        class_names = ['Background', 'WLAN', 'Bluetooth', 'BLE']
+        output_dir = "test_results2"
+        os.makedirs(output_dir, exist_ok=True)
+        
+        cm_path, cm = create_confusion_matrix_from_predictions(all_true_labels, all_pred_labels, class_names, output_dir)
+        if cm_path:
+            print(f"Confusion matrix created with {len(all_true_labels)} ground truth labels and {len(all_pred_labels)} predictions")
     
     print(f"\n=== Enhanced Test Summary ===")
     print(f"Total images tested: {len(selected_files)}")
@@ -249,7 +301,7 @@ def test_multiple_images(model_path, num_images=10, conf_threshold=0.5):
 
 def create_test_summary(test_results, model_path, conf_threshold, total_model_detections, total_yolo_labels):
     """Create comprehensive test summary with matrix and analysis"""
-    output_dir = "yolo_testing_results"
+    output_dir = "test_results2"
     os.makedirs(output_dir, exist_ok=True)
     
     # Create test summary file
@@ -300,7 +352,7 @@ def main():
     import argparse
     
     parser = argparse.ArgumentParser(description='Test YOLO Model')
-    parser.add_argument('--model_path', type=str, default='yolo_training/rf_detection/weights/best.pt',
+    parser.add_argument('--model_path', type=str, default='yolo_training2/rf_detection/weights/best.pt',
                        help='Path to trained model')
     parser.add_argument('--image_path', type=str, default=None,
                        help='Path to single image to test')
