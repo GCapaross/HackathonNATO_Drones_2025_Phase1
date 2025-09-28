@@ -36,3 +36,6 @@ env/
 .env
 
 
+csv_files_dataset/*
+
+
