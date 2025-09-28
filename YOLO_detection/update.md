@@ -574,3 +574,556 @@ imgsz=1920  # Maximum detail preservation
 - **Better WLAN detection**: More accurate bounding boxes
 - **Higher detection rates**: Should exceed 74%
 - **Reduced information loss**: More signal details preserved
+
+## Phase 10: Single Packet Samples Discovery - Game Changer!
+
+### Critical Discovery - Untapped Training Data
+
+**Found: `single_packet_samples/` folder with 537 individual signal samples!**
+
+### Dataset Analysis
+
+**Single Packet Samples Distribution:**
+- **WLAN**: 480 samples (89.4%) - Clean WLAN signals
+- **BT_classic**: 29 samples (5.4%) - Bluetooth Classic signals  
+- **BLE_1MHz**: 21 samples (3.9%) - BLE 1MHz bandwidth
+- **BLE_2MHz**: 7 samples (1.3%) - BLE 2MHz bandwidth
+- **Total**: 537 individual signal samples
+
+**Comparison with Main Dataset:**
+```
+Main Dataset:     71% Background, 16% WLAN, 13% Bluetooth, 0% BLE
+Single Packets:   0% Background, 89% WLAN, 5% Bluetooth, 6% BLE
+```
+
+### Why This is a Game Changer
+
+#### **1. BLE Samples Finally Available!**
+- **Main dataset**: 0% BLE (completely missing)
+- **Single packets**: 6% BLE (28 samples total)
+- **Impact**: Can finally train BLE detection!
+
+#### **2. Clean Signal Training**
+- **No background noise**: Pure signal examples
+- **No interference**: Single signals only
+- **Perfect for learning**: Model sees clean signal characteristics
+- **Better signal recognition**: Learn what each signal type looks like
+
+#### **3. Frequency and Bandwidth Information**
+**From filenames, we can extract:**
+- **Frequency information**: `freqOffset_0.00E+00`
+- **Bandwidth data**: `bw_40E+06` (40MHz), `bw_60E+06` (60MHz)
+- **Signal parameters**: `sampRate_1.25E+08` (125MHz sampling)
+- **Protocol details**: `BTMode_BLE`, `channel_DATA`, `packet_DATA`
+
+#### **4. Protocol-Specific Training**
+- **WLAN variants**: Different bandwidths and encodings
+- **Bluetooth Classic**: Standard BT protocol
+- **BLE 1MHz vs 2MHz**: Different BLE bandwidths
+- **Packet types**: DATA, ADV, different payloads
+
+### Training Strategy with Single Packets
+
+#### **1. Hybrid Training Approach**
+**Combine both datasets:**
+- **Main dataset**: Learn to detect signals in complex environments
+- **Single packets**: Learn clean signal characteristics
+- **Best of both**: Real-world detection + clean signal learning
+
+#### **2. Signal-Specific Training**
+**Create specialized training sets:**
+- **WLAN training**: 480 clean WLAN examples
+- **Bluetooth training**: 29 BT Classic + BLE examples
+- **BLE training**: 28 BLE examples (finally available!)
+- **Frequency-aware training**: Use bandwidth information
+
+#### **3. Frequency and Bandwidth Detection**
+**Extract metadata from filenames:**
+- **Frequency offset detection**: `freqOffset_0.00E+00`
+- **Bandwidth classification**: 1MHz, 2MHz, 40MHz, 60MHz
+- **Protocol identification**: WLAN, BT Classic, BLE
+- **Signal parameter learning**: Sampling rates, encodings
+
+### Implementation Strategy
+
+#### **1. Data Preprocessing**
+**Extract metadata from filenames:**
+```python
+# Example filename parsing:
+# frame138649214288305070-0-0__sampRate_1.25E+08_len_15_enc_1_signalLvl_0_bw_40E+06_freqOffset_0.00E+00_std_WAC.png
+
+def parse_filename(filename):
+    # Extract frequency, bandwidth, protocol, etc.
+    # Create frequency-aware labels
+    # Generate bandwidth-specific training
+```
+
+#### **2. Frequency-Aware Training**
+**Create frequency-based classes:**
+- **WLAN_40MHz**: 40MHz bandwidth WLAN
+- **WLAN_60MHz**: 60MHz bandwidth WLAN  
+- **BT_Classic**: Standard Bluetooth
+- **BLE_1MHz**: BLE 1MHz bandwidth
+- **BLE_2MHz**: BLE 2MHz bandwidth
+
+#### **3. Multi-Task Learning**
+**Train model to detect:**
+- **Signal presence**: Is there a signal?
+- **Signal type**: WLAN, Bluetooth, BLE
+- **Bandwidth**: 1MHz, 2MHz, 40MHz, 60MHz
+- **Frequency**: Center frequency detection
+- **Protocol**: Specific protocol identification
+
+### Expected Improvements
+
+#### **1. BLE Detection**
+- **Current**: 0% BLE detection (no training data)
+- **With single packets**: 28 BLE examples for training
+- **Expected**: Significant BLE detection improvement
+
+#### **2. Signal Quality**
+- **Current**: Mixed signals with background noise
+- **With single packets**: Clean signal characteristics
+- **Expected**: Better signal recognition and classification
+
+#### **3. Frequency Awareness**
+- **Current**: Generic signal detection
+- **With single packets**: Frequency and bandwidth detection
+- **Expected**: More sophisticated RF analysis
+
+#### **4. Protocol Identification**
+- **Current**: Basic WLAN vs Bluetooth
+- **With single packets**: Specific protocol variants
+- **Expected**: Detailed protocol classification
+
+### Technical Implementation
+
+#### **1. Dataset Integration**
+```python
+# Combine datasets
+main_dataset = load_main_dataset()      # Complex environments
+single_packets = load_single_packets()  # Clean signals
+combined_dataset = merge_datasets(main_dataset, single_packets)
+```
+
+#### **2. Metadata Extraction**
+```python
+# Extract frequency and bandwidth info
+def extract_signal_metadata(filename):
+    # Parse filename for frequency, bandwidth, protocol
+    # Create frequency-aware labels
+    # Generate bandwidth-specific training data
+```
+
+#### **3. Frequency-Aware Training**
+```python
+# Train with frequency information
+model.train(
+    data=combined_dataset,
+    imgsz=1280,  # High resolution
+    # Add frequency-aware loss functions
+    # Include bandwidth classification
+    # Protocol-specific training
+)
+```
+
+### Next Steps
+
+#### **1. Immediate Actions**
+- **Analyze single packet samples**: Understand signal characteristics
+- **Create frequency-aware labels**: Extract metadata from filenames
+- **Design hybrid training**: Combine main dataset + single packets
+- **Implement frequency detection**: Add bandwidth and frequency classes
+
+#### **2. Training Strategy**
+- **Phase 1**: Train on single packets (clean signals)
+- **Phase 2**: Fine-tune on main dataset (real-world environments)
+- **Phase 3**: Combined training (best of both worlds)
+
+#### **3. Expected Outcomes**
+- **BLE detection**: Finally possible with 28 BLE examples
+- **Frequency awareness**: Detect and classify by frequency/bandwidth
+- **Protocol identification**: Detailed protocol classification
+- **Signal quality**: Better recognition of clean signals
+- **Overall performance**: Significant improvement in all metrics
+
+### Key Learning
+
+**We've been training on the wrong dataset!** The single packet samples are exactly what we need for:
+1. **BLE training data** (finally available!)
+2. **Clean signal learning** (no background noise)
+3. **Frequency awareness** (bandwidth and frequency detection)
+4. **Protocol-specific training** (detailed signal classification)
+
+**This discovery could solve all our detection problems and enable much more sophisticated RF signal analysis!**
+
+## Phase 11: Configuration Analysis - Signal Generation Parameters
+
+### Critical Discovery - Signal Generation Configuration
+
+**Found: `config_packet_capture.toml` - Complete signal generation parameters!**
+
+### Hardware Configuration Analysis
+
+#### **USRP Hardware Setup:**
+- **Sample Rate**: 125 MHz (125e6 Hz)
+- **Center Frequency**: 2.472 GHz (2.472e9 Hz)
+- **Bandwidth**: 80 MHz (80e6 Hz)
+- **Hardware**: USRP (Universal Software Radio Peripheral)
+
+#### **Signal Generation Standards:**
+- **Generated Standards**: BLE, BT_CLASSIC, WLAN
+- **Purpose**: Controlled signal generation for training data
+- **Quality**: High-quality, known-parameter signals
+
+### WLAN Signal Parameters
+
+#### **WLAN Standards Used:**
+- **WAC**: WiFi 6 (802.11ax) - Most advanced standard
+- **WBG**: WiFi 6E (802.11ax-2021) - Extended frequency
+- **WN**: WiFi 6 (802.11ax) - Standard implementation
+- **WAG**: WiFi 6 (802.11ax) - Alternative implementation
+- **WPJ**: WiFi 6 (802.11ax) - Alternative implementation
+
+#### **WLAN Signal Variations:**
+**Bandwidth Options:**
+- **20 MHz**: Standard WiFi bandwidth
+- **40 MHz**: Bonded channels (2x20MHz)
+- **80 MHz**: Wide bandwidth (4x20MHz)
+
+**Modulation and Coding Schemes (MCS):**
+- **MCS 1**: Low data rate, robust transmission
+- **MCS 3**: Medium data rate
+- **MCS 7**: High data rate, requires good signal quality
+
+**Payload Lengths:**
+- **Short**: 15, 50 bytes (control frames)
+- **Medium**: 250, 500, 1000 bytes (typical data)
+- **Long**: 1500, 2500, 7500, 15000 bytes (large transfers)
+
+**Packet Types:**
+- **DATA**: Standard data packets
+- **TRIG**: Trigger frames (WiFi 6 feature)
+- **BEAC**: Beacon frames (network announcements)
+
+### Bluetooth Classic Parameters
+
+#### **Bluetooth Modes:**
+- **BAS**: Basic mode (standard Bluetooth)
+- **Enhanced Data Rate (EDR)**: Higher speed modes
+
+#### **Packet Types and Data Rates:**
+- **DH5**: 1 Mbps (standard Bluetooth)
+- **ADH5**: 2 Mbps (Enhanced Data Rate)
+- **AEDH5**: 3 Mbps (Enhanced Data Rate)
+
+#### **Payload Lengths:**
+- **DH5**: Up to 339 bytes
+- **ADH5**: Up to 679 bytes  
+- **AEDH5**: Up to 1021 bytes
+
+#### **Packet Duration Calculations:**
+- **1 Mbps**: (payload + 10 bytes) × 8 × 1μs
+- **2 Mbps**: (payload + 10 bytes) × 8 × 0.5μs
+- **3 Mbps**: (payload + 10 bytes) × 8 × 0.33μs
+
+### BLE (Bluetooth Low Energy) Parameters
+
+#### **BLE Channel Types:**
+- **DATA**: Data channels (37 channels)
+- **ADV**: Advertising channels (3 channels)
+
+#### **BLE Packet Types:**
+- **DATA**: Data packets
+- **AIND**: Advertising packets
+
+#### **BLE Packet Formats:**
+- **L1M**: 1 Mbps (standard BLE)
+- **L2M**: 2 Mbps (BLE 5.0 feature)
+- **LCOD**: Coded PHY (BLE 5.0 feature)
+
+#### **BLE Payload Lengths:**
+- **DATA**: Up to 251 bytes
+- **ADV**: Up to 31 bytes
+
+#### **BLE Packet Duration Calculations:**
+- **1 Mbps**: (payload + 10 bytes) × 8 × 1μs
+- **2 Mbps**: (payload + 10 bytes) × 8 × 0.5μs
+
+### Training Implications
+
+#### **1. Signal Quality Control**
+- **Known parameters**: Every signal has documented characteristics
+- **Controlled generation**: No random interference or noise
+- **Standard compliance**: All signals follow official standards
+- **Reproducible**: Same parameters generate same signals
+
+#### **2. Frequency-Aware Training**
+- **Center frequency**: 2.472 GHz (2.4 GHz ISM band)
+- **Bandwidth variations**: 20, 40, 80 MHz for WLAN
+- **Channel awareness**: Different frequency channels
+- **Standard identification**: WiFi 6, Bluetooth, BLE variants
+
+#### **3. Protocol-Specific Training**
+**WLAN Training:**
+- **Standards**: WAC, WBG, WN (different WiFi 6 implementations)
+- **Bandwidths**: 20, 40, 80 MHz
+- **MCS levels**: 1, 3, 7 (different data rates)
+- **Frame types**: DATA, TRIG, BEAC
+
+**Bluetooth Training:**
+- **Classic modes**: DH5, ADH5, AEDH5
+- **Data rates**: 1, 2, 3 Mbps
+- **Payload variations**: 6 to 1021 bytes
+
+**BLE Training:**
+- **Channel types**: DATA, ADV
+- **Packet formats**: L1M, L2M, LCOD
+- **Data rates**: 1, 2 Mbps
+- **Payload variations**: 0 to 251 bytes
+
+#### **4. Signal Duration Training**
+- **WLAN**: 2.2ms to 4.5ms (depending on bandwidth)
+- **Bluetooth**: 125μs to 1028μs (depending on data rate)
+- **BLE**: 81μs to 367μs (depending on format)
+
+### Advanced Training Opportunities
+
+#### **1. Multi-Standard Detection**
+- **WiFi 6 variants**: WAC, WBG, WN identification
+- **Bluetooth generations**: Classic vs BLE
+- **BLE versions**: 1Mbps vs 2Mbps vs Coded PHY
+
+#### **2. Bandwidth Classification**
+- **WLAN**: 20, 40, 80 MHz detection
+- **Bluetooth**: 1, 2, 3 Mbps detection
+- **BLE**: 1, 2 Mbps detection
+
+#### **3. Frame Type Identification**
+- **WLAN**: DATA, TRIG, BEAC frames
+- **Bluetooth**: DH5, ADH5, AEDH5 packets
+- **BLE**: DATA, AIND packets
+
+#### **4. Payload Length Estimation**
+- **Short packets**: Control/management frames
+- **Medium packets**: Typical data transfers
+- **Long packets**: Large file transfers
+
+### Implementation Strategy
+
+#### **1. Metadata Extraction**
+```python
+def extract_signal_metadata(filename):
+    # Parse filename for all parameters
+    # Extract: standard, bandwidth, MCS, payload length
+    # Create comprehensive signal classification
+    # Generate frequency-aware training labels
+```
+
+#### **2. Multi-Task Learning**
+**Train model to detect:**
+- **Signal presence**: Is there a signal?
+- **Standard type**: WLAN, Bluetooth, BLE
+- **Specific standard**: WAC, WBG, WN, DH5, ADH5, L1M, L2M
+- **Bandwidth**: 20, 40, 80 MHz, 1, 2, 3 Mbps
+- **Frame type**: DATA, TRIG, BEAC, AIND
+- **Payload estimation**: Short, medium, long
+
+#### **3. Frequency-Aware Training**
+**Create frequency-based classes:**
+- **WLAN_20MHz**: 20 MHz WiFi
+- **WLAN_40MHz**: 40 MHz WiFi  
+- **WLAN_80MHz**: 80 MHz WiFi
+- **BT_1Mbps**: Standard Bluetooth
+- **BT_2Mbps**: Enhanced Bluetooth
+- **BT_3Mbps**: High-speed Bluetooth
+- **BLE_1Mbps**: Standard BLE
+- **BLE_2Mbps**: BLE 5.0
+- **BLE_Coded**: BLE 5.0 Coded PHY
+
+### Expected Improvements
+
+#### **1. Comprehensive Signal Detection**
+- **All standards**: WLAN, Bluetooth, BLE
+- **All variants**: Different implementations
+- **All bandwidths**: 20MHz to 80MHz
+- **All data rates**: 1Mbps to 3Mbps
+
+#### **2. Advanced Classification**
+- **Standard identification**: WiFi 6, Bluetooth, BLE
+- **Variant detection**: WAC vs WBG vs WN
+- **Bandwidth classification**: 20, 40, 80 MHz
+- **Data rate detection**: 1, 2, 3 Mbps
+
+#### **3. Protocol Analysis**
+- **Frame type identification**: DATA, TRIG, BEAC
+- **Packet format detection**: L1M, L2M, LCOD
+- **Payload estimation**: Short, medium, long
+- **Duration analysis**: Signal timing characteristics
+
+### Key Learning
+
+**The configuration file reveals this is a highly sophisticated signal generation system!** We have access to:
+1. **All major wireless standards** (WiFi 6, Bluetooth, BLE)
+2. **Controlled signal generation** (known parameters)
+3. **Frequency-aware training** (bandwidth and data rate detection)
+4. **Protocol-specific training** (frame types and packet formats)
+5. **Advanced classification** (standard variants and implementations)
+
+**This enables training a model that can perform sophisticated RF signal analysis, not just basic detection!**
+
+## Phase 12: Merged Packets Analysis - Bandwidth-Specific Training Data
+
+### Critical Discovery - Bandwidth-Specific Dataset
+
+**Found: `merged_packets/` folder with 20,000 bandwidth-specific signal samples!**
+
+### Dataset Structure Analysis
+
+**Merged Packets Organization:**
+- **bw_25e6**: 5,000 samples (25 MHz bandwidth)
+- **bw_45e6**: 5,000 samples (45 MHz bandwidth)  
+- **bw_60e6**: 5,000 samples (60 MHz bandwidth)
+- **bw_125e6**: 5,000 samples (125 MHz bandwidth)
+- **Total**: 20,000 bandwidth-specific samples
+
+**File Naming Pattern:**
+```
+frame_138769090412766230_bw_25E+6
+frame_138769090412766231_bw_25E+6
+frame_138769090431506400_bw_25E+6
+```
+
+**Key Information from Filenames:**
+- **Frame ID**: `138769090412766230` (timestamp-based)
+- **Bandwidth**: `bw_25E+6` (25 MHz), `bw_45E+6` (45 MHz), etc.
+- **Sequential numbering**: Multiple samples per bandwidth
+
+### Purpose of Merged Packets
+
+#### **1. Bandwidth-Specific Training**
+**Different bandwidths for different use cases:**
+- **25 MHz**: Narrow bandwidth, focused signals
+- **45 MHz**: Medium bandwidth, balanced coverage
+- **60 MHz**: Wide bandwidth, comprehensive coverage
+- **125 MHz**: Ultra-wide bandwidth, maximum coverage
+
+#### **2. Real-World Signal Simulation**
+**Merged packets likely represent:**
+- **Multiple signals combined**: Real-world RF environments
+- **Interference scenarios**: Multiple protocols operating simultaneously
+- **Bandwidth variations**: Different channel widths
+- **Complex environments**: Not just single signals
+
+#### **3. Training Data Progression**
+**From simple to complex:**
+- **Single packets**: Clean, individual signals
+- **Merged packets**: Complex, multi-signal environments
+- **Main dataset**: Real-world captured data
+
+### Training Implications
+
+#### **1. Bandwidth-Aware Training**
+**Create bandwidth-specific classes:**
+- **WLAN_25MHz**: 25 MHz WiFi signals
+- **WLAN_45MHz**: 45 MHz WiFi signals
+- **WLAN_60MHz**: 60 MHz WiFi signals
+- **WLAN_125MHz**: 125 MHz WiFi signals
+
+#### **2. Multi-Signal Detection**
+**Train model to handle:**
+- **Multiple simultaneous signals**: Different protocols
+- **Bandwidth variations**: 25 MHz to 125 MHz
+- **Signal overlap**: Interfering signals
+- **Complex environments**: Real-world scenarios
+
+#### **3. Progressive Training Strategy**
+**Three-tier training approach:**
+- **Tier 1**: Single packets (clean signals)
+- **Tier 2**: Merged packets (multi-signal environments)
+- **Tier 3**: Main dataset (real-world captured data)
+
+### Expected Improvements
+
+#### **1. Bandwidth Classification**
+- **25 MHz**: Narrow, focused signals
+- **45 MHz**: Medium coverage
+- **60 MHz**: Wide coverage
+- **125 MHz**: Ultra-wide coverage
+
+#### **2. Multi-Signal Handling**
+- **Signal separation**: Detect multiple signals
+- **Interference mitigation**: Handle overlapping signals
+- **Protocol identification**: Multiple protocols simultaneously
+- **Bandwidth optimization**: Choose appropriate bandwidth
+
+#### **3. Real-World Performance**
+- **Complex environments**: Handle real-world scenarios
+- **Signal overlap**: Multiple signals in same frequency
+- **Bandwidth adaptation**: Adjust to different channel widths
+- **Interference resistance**: Robust detection in noisy environments
+
+### Implementation Strategy
+
+#### **1. Bandwidth-Specific Training**
+```python
+# Create bandwidth-aware training
+def create_bandwidth_dataset():
+    # 25 MHz samples: Narrow bandwidth training
+    # 45 MHz samples: Medium bandwidth training
+    # 60 MHz samples: Wide bandwidth training
+    # 125 MHz samples: Ultra-wide bandwidth training
+```
+
+#### **2. Multi-Signal Detection**
+```python
+# Train for multi-signal scenarios
+def train_multi_signal_detection():
+    # Handle multiple simultaneous signals
+    # Detect signals in different bandwidths
+    # Classify overlapping signals
+    # Optimize for real-world environments
+```
+
+#### **3. Progressive Training**
+```python
+# Three-tier training approach
+def progressive_training():
+    # Phase 1: Single packets (clean signals)
+    # Phase 2: Merged packets (multi-signal)
+    # Phase 3: Main dataset (real-world)
+```
+
+### Training Data Hierarchy
+
+#### **1. Single Packets (537 samples)**
+- **Purpose**: Learn clean signal characteristics
+- **Content**: Individual, isolated signals
+- **Quality**: High-quality, controlled generation
+- **Use**: Signal recognition training
+
+#### **2. Merged Packets (20,000 samples)**
+- **Purpose**: Learn multi-signal environments
+- **Content**: Combined signals, bandwidth variations
+- **Quality**: Controlled multi-signal scenarios
+- **Use**: Complex environment training
+
+#### **3. Main Dataset (20,000+ samples)**
+- **Purpose**: Real-world signal detection
+- **Content**: Captured RF environments
+- **Quality**: Real-world conditions
+- **Use**: Final deployment training
+
+### Key Learning
+
+**The merged packets folder represents the missing link between single signals and real-world environments!** This enables:
+
+1. **Bandwidth-specific training** (25, 45, 60, 125 MHz)
+2. **Multi-signal detection** (multiple protocols simultaneously)
+3. **Progressive training** (simple → complex → real-world)
+4. **Real-world performance** (complex RF environments)
+
+**This completes the training data hierarchy: Single signals → Multi-signal environments → Real-world captured data!**
+
+
+We can also play with the batch sizes
