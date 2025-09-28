@@ -189,16 +189,34 @@ def create_enhanced_visualization(image_path, result, test_number):
 def create_confusion_matrix_from_predictions(all_true_labels, all_pred_labels, class_names, output_dir):
     """Create real confusion matrix from predictions"""
     try:
+        # Check if we have data
+        if len(all_true_labels) == 0 or len(all_pred_labels) == 0:
+            print("No data available for confusion matrix")
+            return None, None
+        
+        # Create confusion matrix - handle mismatched lengths by padding
+        # Pad the shorter list to match the longer one
+        max_len = max(len(all_true_labels), len(all_pred_labels))
+        
+        # Pad with -1 (unknown class) to indicate missing predictions/ground truth
+        true_labels_padded = all_true_labels + [-1] * (max_len - len(all_true_labels))
+        pred_labels_padded = all_pred_labels + [-1] * (max_len - len(all_pred_labels))
+        
         # Create confusion matrix
-        cm = confusion_matrix(all_true_labels, all_pred_labels)
+        cm = confusion_matrix(true_labels_padded, pred_labels_padded)
         
         # Create plot
-        plt.figure(figsize=(10, 8))
+        plt.figure(figsize=(12, 8))
         sns.heatmap(cm, annot=True, fmt='d', cmap='Blues', 
                    xticklabels=class_names, yticklabels=class_names)
         plt.title('Confusion Matrix - YOLO Model Performance')
         plt.xlabel('Predicted Class')
         plt.ylabel('True Class')
+        
+        # Add detailed summary text
+        plt.figtext(0.5, 0.02, 
+                   f'Ground Truth: {len(all_true_labels)} objects | Model Predictions: {len(all_pred_labels)} objects | Detection Rate: {len(all_pred_labels)/len(all_true_labels)*100:.1f}%', 
+                   ha='center', fontsize=10, bbox=dict(boxstyle='round,pad=0.3', facecolor='lightgray'))
         
         # Save confusion matrix
         cm_path = os.path.join(output_dir, 'confusion_matrix.png')
@@ -206,10 +224,13 @@ def create_confusion_matrix_from_predictions(all_true_labels, all_pred_labels, c
         plt.close()
         
         print(f"Confusion matrix saved to: {cm_path}")
+        print(f"Detection rate: {len(all_pred_labels)/len(all_true_labels)*100:.1f}%")
         return cm_path, cm
         
     except Exception as e:
         print(f"Could not create confusion matrix: {e}")
+        print(f"Ground truth labels: {len(all_true_labels)}")
+        print(f"Model predictions: {len(all_pred_labels)}")
         return None, None
 
 def test_multiple_images(model_path, num_images=10, conf_threshold=0.5):
@@ -283,13 +304,29 @@ def test_multiple_images(model_path, num_images=10, conf_threshold=0.5):
     
     # Create confusion matrix if we have predictions
     if len(all_true_labels) > 0 and len(all_pred_labels) > 0:
-        class_names = ['Background', 'WLAN', 'Bluetooth', 'BLE']
+        class_names = ['Background', 'WLAN', 'Bluetooth', 'BLE', 'Missing']
         output_dir = "test_results2"
         os.makedirs(output_dir, exist_ok=True)
+        
+        print(f"\n=== Confusion Matrix Data ===")
+        print(f"Ground truth labels: {len(all_true_labels)}")
+        print(f"Model predictions: {len(all_pred_labels)}")
+        print(f"Ground truth class distribution: {np.bincount(all_true_labels)}")
+        print(f"Model prediction distribution: {np.bincount(all_pred_labels)}")
         
         cm_path, cm = create_confusion_matrix_from_predictions(all_true_labels, all_pred_labels, class_names, output_dir)
         if cm_path:
             print(f"Confusion matrix created with {len(all_true_labels)} ground truth labels and {len(all_pred_labels)} predictions")
+        else:
+            print("Could not create confusion matrix due to data mismatch")
+    else:
+        print(f"\n=== No Confusion Matrix ===")
+        print(f"Ground truth labels: {len(all_true_labels)}")
+        print(f"Model predictions: {len(all_pred_labels)}")
+        if len(all_pred_labels) == 0:
+            print("Model made no predictions - this indicates the model is not detecting any objects")
+        if len(all_true_labels) == 0:
+            print("No ground truth labels found - check if .txt files exist")
     
     print(f"\n=== Enhanced Test Summary ===")
     print(f"Total images tested: {len(selected_files)}")

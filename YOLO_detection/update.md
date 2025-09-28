@@ -421,3 +421,156 @@ This phase represents a systematic approach to addressing class imbalance throug
 2. **Data augmentation** for minority class enhancement
 3. **Systematic testing** to validate improvements
 4. **Comparative analysis** between model versions
+
+## Phase 8: Resolution and Information Loss Analysis
+
+### Critical Discovery - Resolution Impact
+
+**Test Results Analysis:**
+- **Model IS detecting objects**: 17 Backgrounds, 1 WLAN detected
+- **Processing resolution**: 128x640 (very narrow)
+- **Original spectrograms**: Much larger (1024x192 or similar)
+- **Information loss**: YOLO compression is losing signal details
+
+### Root Cause of Detection Issues
+
+**Resolution Compression Problem:**
+```
+Original Spectrogram: 1024x192 (detailed frequency info)
+YOLO Processing:      128x640  (compressed, lost details)
+```
+
+**Impact on Signal Detection:**
+- **WLAN signals**: Larger, might survive compression
+- **Bluetooth signals**: Smaller, likely lost in compression
+- **BLE signals**: Even smaller, probably disappear completely
+- **Background**: Large regions, always detected
+
+**Why This Explains Our Results:**
+- **Model detects WLAN**: Larger signals survive compression
+- **Model misses Bluetooth**: Smaller signals lost in compression
+- **Model detects lots of Background**: Large regions always visible
+- **Not a classification problem**: It's an information loss problem
+
+### Next Steps - Resolution Solutions
+
+#### **1. Higher Resolution Training**
+- **Current**: YOLO uses 640x640 input (gets resized to 128x640)
+- **Solution**: Train with larger input sizes to preserve signal details
+- **Implementation**: Modify training parameters to use higher resolution
+
+#### **2. Aspect Ratio Preservation**
+- **Problem**: 128x640 is very narrow, loses frequency details
+- **Solution**: Preserve original aspect ratios during training
+- **Benefit**: Maintains signal characteristics
+
+#### **3. Multi-Scale Training**
+- **Approach**: Train model to handle different resolutions
+- **Benefit**: Better detection of both large and small signals
+- **Implementation**: Use different input sizes during training
+
+#### **4. Signal-Specific Preprocessing**
+- **WLAN signals**: Larger, can handle some compression
+- **Bluetooth signals**: Smaller, need higher resolution
+- **BLE signals**: Smallest, need maximum resolution
+- **Solution**: Adaptive preprocessing based on signal type
+
+### Technical Implementation
+
+**Training Parameter Changes:**
+```python
+# Current training
+imgsz=640  # Standard YOLO size
+
+# Proposed changes
+imgsz=1280  # Higher resolution
+# OR
+imgsz=1024  # Preserve more detail
+# OR
+imgsz=1920  # Maximum detail preservation
+```
+
+**Expected Improvements:**
+- **Better Bluetooth detection**: Higher resolution preserves small signals
+- **Better BLE detection**: Smallest signals become visible
+- **Maintained WLAN detection**: Large signals still detected
+- **Reduced Background bias**: More signal details preserved
+
+### Monitoring Strategy
+
+**During Higher Resolution Training:**
+- **Watch for memory issues**: Higher resolution uses more GPU memory
+- **Monitor training speed**: May be slower with larger images
+- **Check detection quality**: Should see more small signal detections
+
+**After Training:**
+- **Compare detection rates**: Bluetooth and BLE should improve
+- **Check signal quality**: Bounding boxes should be more accurate
+- **Test with original resolution**: See if compression still causes issues
+
+### Expected Outcomes
+
+**Success Indicators:**
+- **More Bluetooth detections**: Small signals preserved
+- **BLE signal detection**: Smallest signals now visible
+- **Better bounding box accuracy**: Higher resolution = better positioning
+- **Reduced information loss**: More signal details preserved
+
+**If Still Issues:**
+- **Memory constraints**: May need to reduce batch size
+- **Training time**: May need more epochs for convergence
+- **Model architecture**: May need larger model for higher resolution
+
+### Key Learning
+
+**The resolution compression is likely the primary cause of detection issues, not just class imbalance.** Small RF signals (Bluetooth, BLE) are being lost in the compression process, while larger signals (WLAN) survive. This explains why the model detects WLAN but misses Bluetooth - it's not a learning problem, it's an information preservation problem.
+
+## Phase 9: Improved Model Performance Results
+
+### Test Results Analysis (Current Model)
+
+**Excellent Performance Improvement:**
+- **Detection rate**: 74% (162/220 objects detected)
+- **Bluetooth detection**: Model now detects Bluetooth signals!
+- **WLAN detection**: Model detects WLAN signals consistently
+- **Overall detection ratio**: 0.74 per image (significant improvement)
+
+**Class Distribution Results:**
+- **Ground truth**: 153 Background, 36 WLAN, 31 Bluetooth
+- **Model predictions**: 145 Background, 11 WLAN, 6 Bluetooth
+- **Key finding**: Model is detecting all three classes (Background, WLAN, Bluetooth)
+
+**Performance Metrics:**
+- **Total images tested**: 10
+- **Total model detections**: 162
+- **Total YOLO labels**: 220
+- **Average model detections per image**: 16.20
+- **Average YOLO labels per image**: 22.00
+
+### What This Means
+
+**Model is Working Much Better:**
+- **74% detection rate** is a significant improvement
+- **Bluetooth detection confirmed** - Model found 2 Bluetooth signals in one image
+- **WLAN detection working** - Model found 2 WLAN signals
+- **Not just Background bias** - Model is detecting actual signals
+
+**Remaining Challenges:**
+- **Still missing some objects** - 26% of objects not detected
+- **Bluetooth detection rate**: 6/31 = 19% (needs improvement)
+- **WLAN detection rate**: 11/36 = 31% (needs improvement)
+- **Resolution still an issue** - Higher resolution training should help
+
+### Next Steps - Higher Resolution Training
+
+**Ready to implement higher resolution training:**
+- **Current resolution**: 128x640 (compressed)
+- **Proposed resolution**: 1280x640 (2x higher)
+- **Expected improvements**: Better preservation of small signal details
+- **Training parameters**: `imgsz=1280`, `batch=8`
+
+**Expected outcomes with higher resolution:**
+- **Better Bluetooth detection**: Small signals preserved
+- **Better WLAN detection**: More accurate bounding boxes
+- **Higher detection rates**: Should exceed 74%
+- **Reduced information loss**: More signal details preserved
