@@ -12,6 +12,7 @@ import os
 import random
 from PIL import Image
 import argparse
+import re
 
 # Import our modules
 from data_loader import create_data_loaders
@@ -48,13 +49,39 @@ class PredictionVisualizer:
         print(f"Model loaded from: {model_path}")
         print(f"Classes: {self.class_names}")
         print(f"Device: {self.device}")
+        
+        # Frequency configuration from the dataset
+        self.center_freq = 2.412e9  # 2.412 GHz (from config)
+        self.sample_rates = [25e6, 45e6, 60e6, 125e6]  # Available bandwidths
+    
+    def extract_frequency_info(self, filename):
+        """Extract bandwidth and frequency information from filename"""
+        # Extract bandwidth from filename (e.g., "bw_25E+6" -> 25 MHz)
+        bw_match = re.search(r'bw_(\d+\.?\d*)E\+?(\d+)', filename)
+        if bw_match:
+            bandwidth_hz = float(bw_match.group(1)) * (10 ** int(bw_match.group(2)))
+            bandwidth_mhz = bandwidth_hz / 1e6
+        else:
+            bandwidth_mhz = 25.0  # Default fallback
+        
+        # Calculate frequency range
+        freq_start = (self.center_freq - bandwidth_hz/2) / 1e9  # GHz
+        freq_end = (self.center_freq + bandwidth_hz/2) / 1e9    # GHz
+        
+        return {
+            'bandwidth_mhz': bandwidth_mhz,
+            'bandwidth_hz': bandwidth_hz,
+            'freq_start_ghz': freq_start,
+            'freq_end_ghz': freq_end,
+            'center_freq_ghz': self.center_freq / 1e9
+        }
 
     def get_sample_predictions(self, num_samples=10):
         """Get sample predictions from validation set"""
         samples = []
         
         with torch.no_grad():
-            for batch_idx, (images, labels) in enumerate(self.val_loader):
+            for batch_idx, (images, labels, filenames) in enumerate(self.val_loader):
                 images, labels = images.to(self.device), labels.to(self.device)
                 
                 # Get predictions
@@ -70,12 +97,17 @@ class PredictionVisualizer:
                 
                 # Store samples with additional info
                 for i in range(len(images_cpu)):
+                    # Extract frequency information from filename
+                    freq_info = self.extract_frequency_info(filenames[i])
+                    
                     sample = {
                         'image': images_cpu[i],
                         'true_label': labels_cpu[i].item(),
                         'predicted_label': predicted_cpu[i].item(),
                         'probabilities': probabilities_cpu[i].numpy(),
                         'confidence': probabilities_cpu[i].max().item(),
+                        'filename': filenames[i],
+                        'frequency_info': freq_info,
                         'batch_idx': batch_idx,
                         'sample_idx': i
                     }
@@ -109,6 +141,10 @@ class PredictionVisualizer:
         confidence = sample['confidence']
         probabilities = sample['probabilities']
         
+        # Get frequency information
+        freq_info = sample['frequency_info']
+        filename = sample['filename']
+        
         # Create figure with 3 subplots
         fig, (ax1, ax2, ax3) = plt.subplots(1, 3, figsize=(20, 6))
         
@@ -134,15 +170,36 @@ class PredictionVisualizer:
                 bbox=dict(boxstyle='round', facecolor='lightyellow', alpha=0.8),
                 verticalalignment='top')
         
+        # Add frequency information
+        ax1.text(0.02, 0.68, f'Bandwidth: {freq_info["bandwidth_mhz"]:.1f} MHz', 
+                transform=ax1.transAxes, fontsize=10,
+                bbox=dict(boxstyle='round', facecolor='lightcyan', alpha=0.8),
+                verticalalignment='top')
+        
+        ax1.text(0.02, 0.58, f'Freq Range: {freq_info["freq_start_ghz"]:.3f}-{freq_info["freq_end_ghz"]:.3f} GHz', 
+                transform=ax1.transAxes, fontsize=10,
+                bbox=dict(boxstyle='round', facecolor='lightcyan', alpha=0.8),
+                verticalalignment='top')
+        
+        ax1.text(0.02, 0.48, f'Center: {freq_info["center_freq_ghz"]:.3f} GHz', 
+                transform=ax1.transAxes, fontsize=10,
+                bbox=dict(boxstyle='round', facecolor='lightcyan', alpha=0.8),
+                verticalalignment='top')
+        
         # Plot spectrogram with YOLO labels overlaid
         ax2.imshow(image_np)
         ax2.set_title('Ground Truth Labels', fontsize=14, fontweight='bold')
         ax2.axis('off')
         
         # Show the ground truth class information
-        ax2.text(0.5, 0.5, f'True Class: {true_class}\n\nThis is what the model\nshould have predicted', 
+        ax2.text(0.5, 0.6, f'True Class: {true_class}\n\nThis is what the model\nshould have predicted', 
                 transform=ax2.transAxes, fontsize=12, ha='center', va='center',
                 bbox=dict(boxstyle='round', facecolor='lightblue', alpha=0.8))
+        
+        # Add frequency information to second panel
+        ax2.text(0.5, 0.3, f'Bandwidth: {freq_info["bandwidth_mhz"]:.1f} MHz\nFreq: {freq_info["freq_start_ghz"]:.3f}-{freq_info["freq_end_ghz"]:.3f} GHz', 
+                transform=ax2.transAxes, fontsize=10, ha='center', va='center',
+                bbox=dict(boxstyle='round', facecolor='lightcyan', alpha=0.8))
         
         # Plot probability distribution
         bars = ax3.bar(self.class_names, probabilities, color=['lightblue', 'lightgreen', 'lightcoral', 'lightyellow'])
@@ -165,6 +222,15 @@ class PredictionVisualizer:
         
         # Add legend
         ax3.legend(['True Class', 'Predicted Class'], loc='upper right')
+        
+        # Add frequency information to third panel
+        ax3.text(0.02, 0.98, f'File: {filename}', 
+                transform=ax3.transAxes, fontsize=9, ha='left', va='top',
+                bbox=dict(boxstyle='round', facecolor='lightgray', alpha=0.8))
+        
+        ax3.text(0.02, 0.88, f'BW: {freq_info["bandwidth_mhz"]:.1f} MHz', 
+                transform=ax3.transAxes, fontsize=9, ha='left', va='top',
+                bbox=dict(boxstyle='round', facecolor='lightcyan', alpha=0.8))
         
         plt.tight_layout()
         return fig
