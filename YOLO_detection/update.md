@@ -249,16 +249,175 @@ After comprehensive testing with the enhanced test_model.py script, the followin
 
 **Detection Challenges:**
 - Model has difficulties finding WLAN and Bluetooth signals in spectrograms
+- **Critical Issue**: Model is not detecting Bluetooth at all (not just misclassifying)
+- **Root Cause**: Model learned to ignore minority classes completely
 - Tendency to classify signal regions as Background
 - Learned to be overly conservative to avoid false positives
 - This is a common problem in imbalanced datasets
 
+**Specific Problem Identified:**
+- **Bluetooth Detection**: Model is not finding Bluetooth signals at all
+- **WLAN Detection**: Model is not finding WLAN signals at all
+- **Not a classification problem**: Model isn't misclassifying them as Background
+- **It's a detection problem**: Model is not detecting them in the first place
+
 ### Recommendations for Improvement
+
+**For "Not Detecting At All" Problem:**
+1. **Lower confidence thresholds** - Model might be too conservative
+2. **Increase objectness weight** - Make model more sensitive to objects
+3. **Use focal loss** - Focus on hard-to-detect classes
+4. **Data augmentation** - Create more examples of minority classes
+5. **Collect more training data** - Especially for WLAN and Bluetooth
+
+**For "Misclassification" Problem:**
 1. **Address class imbalance through weighted loss functions**
 2. **Implement data augmentation to balance class representation**
 3. **Use focal loss to focus on hard-to-detect classes**
 4. **Consider collecting more WLAN and Bluetooth training samples**
 5. **Adjust confidence thresholds for better detection sensitivity**
 
+**Additional Solutions for Detection Issues:**
+- **Test with very low confidence thresholds** (0.01, 0.05)
+- **Check if model is learning objectness** (ability to detect objects)
+- **Verify training data quality** - Are WLAN/Bluetooth labels correct?
+- **Consider different model architecture** - Maybe YOLOv8s or YOLOv8m instead of nano
+
 ### Key Learning
 The model's behavior demonstrates a classic case of class imbalance overfitting, where the model learns to predict the majority class (Background) as the safest strategy, leading to poor performance on the minority classes (WLAN, Bluetooth) that are actually the most important to detect.
+
+## Phase 7: Overfitting Fix Implementation
+
+### Problem Analysis
+After identifying the overfitting issue, we implemented several strategies to address the class imbalance problem:
+
+**Root Cause Confirmed:**
+- Training data distribution: 71% Background vs 16% WLAN vs 13% Bluetooth
+- Model learned to minimize loss by predicting the majority class
+- Conservative behavior: "when in doubt, predict Background"
+
+### Solution Implementation
+
+#### **1. New Training Directory**
+- **Change**: Created `yolo_training3/` folder for retraining
+- **Reason**: Keep previous model (`yolo_training2/`) for comparison
+- **Benefit**: Can compare old vs new model performance
+
+#### **2. Enhanced Training Parameters**
+
+**What These Parameters Mean (Simple Explanation):**
+
+**Class Loss Weight (`cls=0.5`):**
+- **What it does**: Tells the model "pay more attention to getting the class right"
+- **Simple explanation**: Like telling a student "getting the answer right is more important than neat handwriting"
+- **Why we increased it**: Model was ignoring WLAN/Bluetooth classes, so we make it focus more on classification
+- **For detection issues**: This helps the model actually detect objects, not just classify them
+
+**Box Loss Weight (`box=7.5`):**
+- **What it does**: Tells the model "make sure the bounding boxes are in the right place"
+- **Simple explanation**: Like telling a student "draw the box around the right object"
+- **Why we kept it high**: We want accurate positioning of detected signals
+
+**Distribution Focal Loss (`dfl=1.5`):**
+- **What it does**: Helps the model be more confident about its predictions
+- **Simple explanation**: Like telling a student "be more sure about your answers"
+- **Why we kept it**: Helps the model give better confidence scores
+
+#### **3. Data Augmentation Strategy**
+
+**What Data Augmentation Means (Simple Explanation):**
+Data augmentation is like creating more training examples by modifying existing images. It's like taking a photo and creating variations (flip it, make it brighter, etc.) to give the model more examples to learn from.
+
+**Mosaic Augmentation (`mosaic=1.0`):**
+- **What it does**: Takes 4 images and combines them into one big image
+- **Simple explanation**: Like making a collage from 4 different photos
+- **Why it helps**: Model sees more combinations of WLAN/Bluetooth signals together
+
+**Mixup Augmentation (`mixup=0.1`):**
+- **What it does**: Blends two images together (10% of the time)
+- **Simple explanation**: Like mixing two paint colors to create a new color
+- **Why it helps**: Creates new examples of WLAN/Bluetooth signals from existing data
+
+**Copy-Paste Augmentation (`copy_paste=0.1`):**
+- **What it does**: Copies objects from one image to another (10% of the time)
+- **Simple explanation**: Like cutting out a person from one photo and pasting them into another
+- **Why it helps**: Creates more WLAN/Bluetooth examples by copying them to different backgrounds
+
+**General Augmentation (`augment=True`):**
+- **What it does**: Applies standard modifications (rotation, brightness, etc.)
+- **Simple explanation**: Like using photo filters to create variations
+- **Why it helps**: Makes the model more robust to different image conditions
+
+
+### Expected Improvements
+
+#### **Training Behavior Changes:**
+- **Slower convergence**: Model should take longer to converge (good sign)
+- **Higher loss initially**: Should start with higher loss values
+- **Gradual improvement**: Loss should decrease more gradually
+- **Better class balance**: Model should learn to detect minority classes
+
+#### **Detection Improvements:**
+- **More WLAN detections**: Should find more WLAN signals
+- **More Bluetooth detections**: Should find more Bluetooth signals
+- **Better confidence scores**: Higher confidence for actual signals
+- **Reduced Background bias**: Less tendency to predict everything as Background
+
+### Implementation Details
+
+**Modified Files:**
+- `train_model.py`: Updated with new parameters and `yolo_training3` directory
+- `test_model.py`: Already configured to test new model
+- `generate_training_report.py`: Will generate report for new training
+
+**Training Command:**
+```bash
+python3 train_model.py
+```
+
+**Testing Command:**
+```bash
+python3 test_model.py --model_path yolo_training3/rf_detection/weights/best.pt
+```
+
+**Testing for Detection Issues:**
+```bash
+# Test with very low confidence thresholds to see if model detects anything
+python3 test_model.py --model_path yolo_training3/rf_detection/weights/best.pt --conf_threshold 0.01
+python3 test_model.py --model_path yolo_training3/rf_detection/weights/best.pt --conf_threshold 0.05
+python3 test_model.py --model_path yolo_training3/rf_detection/weights/best.pt --conf_threshold 0.1
+```
+
+### Monitoring Strategy
+
+**During Training:**
+- Watch for slower loss convergence (good sign)
+- Monitor class-specific metrics if available
+- Check for more balanced detection behavior
+
+**After Training:**
+- Compare with `yolo_training2` results
+- Test with different confidence thresholds
+- Analyze confusion matrix for class balance
+- Check detection ratios for minority classes
+
+### Expected Outcomes
+
+**Success Indicators:**
+- Model detects more WLAN and Bluetooth signals
+- Higher confidence scores for actual signals
+- Better balance between classes in predictions
+- Improved detection ratios in testing
+
+**If Still Overfitting:**
+- May need to collect more minority class data
+- Consider focal loss implementation
+- Adjust confidence thresholds
+- Try different model architectures
+
+### Documentation Update
+This phase represents a systematic approach to addressing class imbalance through:
+1. **Parameter tuning** for better class focus
+2. **Data augmentation** for minority class enhancement
+3. **Systematic testing** to validate improvements
+4. **Comparative analysis** between model versions

@@ -323,7 +323,16 @@ def train_model():
         imgsz=640,
         batch=16,
         device=device,
-        project='yolo_training2',
+        # Parameters to help with class imbalance
+        cls=0.5,  # Class loss weight (higher = more focus on classification)
+        box=7.5,  # Box loss weight
+        dfl=1.5,  # Distribution focal loss weight
+        # Data augmentation to help with minority classes
+        augment=True,
+        mosaic=1.0,
+        mixup=0.1,
+        copy_paste=0.1,
+        project='yolo_training3',
         name='rf_detection',
         save=True,
         plots=True,
@@ -376,7 +385,16 @@ def main():
                 imgsz=640,
                 batch=16,
                 device=device,
-                project='yolo_training2',
+                # Parameters to help with class imbalance
+                cls=0.5,  # Class loss weight (higher = more focus on classification)
+                box=7.5,  # Box loss weight
+                dfl=1.5,  # Distribution focal loss weight
+                # Data augmentation to help with minority classes
+                augment=True,
+                mosaic=1.0,
+                mixup=0.1,
+                copy_paste=0.1,
+                project='yolo_training3',
                 name='rf_detection',
                 save=True,
                 plots=True,
