@@ -2,13 +2,13 @@
 """
 Live Interactive RF Detection Pipeline
 =====================================
-Continuous spectrogram generation with real-time detection and human review.
+Based on interactive_pipeline.py but with automatic model detection and review menu.
 
 Features:
 - Generate spectrograms one by one
-- Model analyzes each spectrogram automatically
-- Human review and correction interface
-- Continuous pipeline with manual oversight
+- Automatic YOLO detection on each spectrogram
+- Save labeled images and YOLO .txt files
+- Menu to review and correct labeled pictures
 """
 
 import os
@@ -17,16 +17,10 @@ import cv2
 import numpy as np
 import tkinter as tk
 from tkinter import ttk, messagebox, filedialog
-import matplotlib
-matplotlib.use('TkAgg')  # Set backend before importing pyplot
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 from matplotlib.patches import Rectangle
 import json
-import threading
-import time
-import queue
-import shutil
 from pathlib import Path
 from typing import List, Tuple, Dict, Optional
 import argparse
@@ -39,7 +33,7 @@ from realtime_yolo_detector import RealtimeYOLODetector
 
 class LiveInteractivePipeline:
     """
-    Live interactive pipeline for continuous RF detection and human review.
+    Live interactive pipeline for RF detection with automatic model processing.
     """
     
     def __init__(self, model_path: str, packet_source: str, output_dir: str = "live_output"):
@@ -51,11 +45,6 @@ class LiveInteractivePipeline:
         self.manual_boxes = []
         self.current_box = None
         self.drawing = False
-        
-        # Live processing state
-        self.is_generating = False
-        self.generation_interval = 3.0  # seconds
-        self.packets_per_spectrogram = 5
         
         # Initialize components
         self.spectrogram_generator = RealtimeSpectrogramGenerator(
@@ -108,15 +97,15 @@ class LiveInteractivePipeline:
         # Source info
         ttk.Label(control_frame, text=f"Source: {self.packet_source}").grid(row=1, column=0, sticky=tk.W)
         
-        # Live processing controls
-        live_frame = ttk.Frame(control_frame)
-        live_frame.grid(row=2, column=0, columnspan=3, pady=5)
+        # Main action buttons
+        action_frame = ttk.Frame(control_frame)
+        action_frame.grid(row=2, column=0, columnspan=3, pady=5)
         
-        ttk.Button(live_frame, text="Generate Next Spectrogram", 
-                  command=self.generate_next_spectrogram).pack(side=tk.LEFT, padx=5)
+        ttk.Button(action_frame, text="Generate & Detect", 
+                  command=self.generate_and_detect, style="Success.TButton").pack(side=tk.LEFT, padx=5)
         
-        ttk.Button(live_frame, text="Run Detection", 
-                  command=self.run_detection).pack(side=tk.LEFT, padx=5)
+        ttk.Button(action_frame, text="Review Labeled Images", 
+                  command=self.open_review_menu).pack(side=tk.LEFT, padx=5)
         
         # Processing settings
         settings_frame = ttk.LabelFrame(control_frame, text="Processing Settings", padding=5)
@@ -152,7 +141,7 @@ class LiveInteractivePipeline:
                   command=self.clear_manual_boxes).pack(side=tk.LEFT, padx=5)
         
         # Status
-        self.status_var = tk.StringVar(value="Ready - Start live processing to begin")
+        self.status_var = tk.StringVar(value="Ready - Click 'Generate & Detect' to begin")
         ttk.Label(control_frame, textvariable=self.status_var).grid(row=6, column=0, columnspan=3, pady=5)
         
         # Image display
@@ -173,7 +162,7 @@ class LiveInteractivePipeline:
         image_frame.pack(fill=tk.BOTH, expand=True, pady=(0, 10))
         
         # Matplotlib figure
-        self.fig, self.ax = plt.subplots(figsize=(14, 7))
+        self.fig, self.ax = plt.subplots(figsize=(12, 6))
         self.canvas = FigureCanvasTkAgg(self.fig, image_frame)
         self.canvas.get_tk_widget().pack(fill=tk.BOTH, expand=True)
         
@@ -189,7 +178,7 @@ class LiveInteractivePipeline:
         
         # Treeview for detections
         columns = ('Class', 'Confidence', 'X1', 'Y1', 'X2', 'Y2', 'Source')
-        self.detection_tree = ttk.Treeview(detection_frame, columns=columns, show='headings', height=6)
+        self.detection_tree = ttk.Treeview(detection_frame, columns=columns, show='headings', height=8)
         
         for col in columns:
             self.detection_tree.heading(col, text=col)
@@ -275,7 +264,7 @@ class LiveInteractivePipeline:
             self.model_path = selected_model
             
             # Reload YOLO detector with new model
-            self.yolo_detector = RealtimeYOLODetector(selected_model, confidence_threshold=0.3)
+            self.yolo_detector = RealtimeYOLODetector(selected_model)
             
             # Clear current detections
             self.current_detections = []
@@ -289,8 +278,8 @@ class LiveInteractivePipeline:
             self.status_var.set(f"Error loading model: {str(e)}")
             messagebox.showerror("Error", f"Failed to load model: {str(e)}")
     
-    def generate_next_spectrogram(self):
-        """Generate the next spectrogram manually."""
+    def generate_and_detect(self):
+        """Generate a spectrogram and automatically run detection."""
         try:
             packets = int(self.packets_var.get())
             
@@ -309,13 +298,9 @@ class LiveInteractivePipeline:
                     self.current_image = cv2.imread(file_path)
                     self.current_image = cv2.cvtColor(self.current_image, cv2.COLOR_BGR2RGB)
                     self.current_image_path = file_path
-                    self.current_detections = []
-                    self.manual_boxes = []
                     
-                    # Update display
-                    self.display_image()
-                    self.update_detection_list()
-                    self.status_var.set(f"Generated: {os.path.basename(file_path)} - Ready for detection")
+                    # Automatically run detection
+                    self.run_detection()
                     
                     print(f"Generated spectrogram: {os.path.basename(file_path)}")
                     
@@ -333,24 +318,20 @@ class LiveInteractivePipeline:
             self.status_var.set("Running detection...")
             self.root.update()
             
-            # Run detection using YOLO model directly (like interactive_pipeline.py)
-            from ultralytics import YOLO
-            model = YOLO(self.model_path)
+            # Use the YOLO detector directly (like the original)
+            detection_objects = self.yolo_detector.detect_in_image(self.current_image)
+            print(f"Raw detections: {len(detection_objects)} objects")
             
-            # Run inference
-            results = model(self.current_image, conf=0.3)
-            
-            # Extract detections
+            # Convert Detection objects to the format expected by the pipeline
             detections = []
-            if results[0].boxes is not None:
-                boxes = results[0].boxes
-                for box in boxes:
-                    x1, y1, x2, y2 = box.xyxy[0].cpu().numpy()
-                    conf = float(box.conf[0])
-                    class_id = int(box.cls[0])
-                    detections.append([x1, y1, x2, y2, conf, class_id])
+            for det in detection_objects:
+                print(f"Detection: conf={det.confidence:.3f}, class={det.class_id}")
+                if det.confidence >= 0.3:  # Apply confidence threshold
+                    detections.append([det.x1, det.y1, det.x2, det.y2, det.confidence, det.class_id])
             
+            print(f"Filtered detections: {len(detections)} objects")
             self.current_detections = detections
+            self.manual_boxes = []
             
             # Update display
             self.display_image()
@@ -429,7 +410,7 @@ class LiveInteractivePipeline:
                 self.class_names[class_id], "1.000", 
                 f"{x1:.0f}", f"{y1:.0f}", f"{x2:.0f}", f"{y2:.0f}", "Manual"
             ))
-    
+            
     def on_mouse_press(self, event):
         """Handle mouse press for manual labeling."""
         if event.inaxes != self.ax:
@@ -635,7 +616,7 @@ class LiveInteractivePipeline:
             
         except Exception as e:
             print(f"Error saving labeled image silently: {e}")
-    
+            
     def save_yolo_labels(self):
         """Save detections in YOLO format (.txt file)."""
         if self.current_image is None:
@@ -681,10 +662,89 @@ class LiveInteractivePipeline:
         except Exception as e:
             print(f"Error saving YOLO labels: {e}")
     
+    def open_review_menu(self):
+        """Open a menu to review labeled images."""
+        # Create review window
+        review_window = tk.Toplevel(self.root)
+        review_window.title("Review Labeled Images")
+        review_window.geometry("1200x800")
+        
+        # Get list of labeled images
+        labeled_files = []
+        for file in os.listdir(self.output_dir):
+            if file.endswith('_labeled.png'):
+                labeled_files.append(file)
+        
+        if not labeled_files:
+            messagebox.showinfo("Info", "No labeled images found. Generate some first!")
+            review_window.destroy()
+            return
+        
+        # Create frame for image list
+        list_frame = ttk.LabelFrame(review_window, text="Labeled Images", padding=10)
+        list_frame.pack(fill=tk.BOTH, expand=True, padx=10, pady=10)
+        
+        # Listbox for labeled images
+        listbox = tk.Listbox(list_frame, height=15)
+        listbox.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
+        
+        for file in sorted(labeled_files):
+            listbox.insert(tk.END, file)
+        
+        # Scrollbar for listbox
+        scrollbar = ttk.Scrollbar(list_frame, orient=tk.VERTICAL, command=listbox.yview)
+        listbox.configure(yscrollcommand=scrollbar.set)
+        scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
+        
+        # Buttons
+        button_frame = ttk.Frame(review_window)
+        button_frame.pack(fill=tk.X, padx=10, pady=5)
+        
+        def load_selected_image():
+            selection = listbox.curselection()
+            if selection:
+                filename = listbox.get(selection[0])
+                # Load the labeled image
+                image_path = os.path.join(self.output_dir, filename)
+                self.load_labeled_image(image_path)
+                review_window.destroy()
+        
+        ttk.Button(button_frame, text="Load Selected", command=load_selected_image).pack(side=tk.LEFT, padx=5)
+        ttk.Button(button_frame, text="Close", command=review_window.destroy).pack(side=tk.RIGHT, padx=5)
+    
+    def load_labeled_image(self, image_path):
+        """Load a labeled image for review."""
+        try:
+            # Load the labeled image
+            self.current_image = cv2.imread(image_path)
+            self.current_image = cv2.cvtColor(self.current_image, cv2.COLOR_BGR2RGB)
+            self.current_image_path = image_path
+            
+            # Try to load corresponding detections if available
+            base_name = os.path.splitext(os.path.basename(image_path))[0]
+            base_name = base_name.replace('_labeled', '')  # Remove _labeled suffix
+            
+            # Look for JSON results file
+            json_file = os.path.join(self.output_dir, f"results_{base_name}.png.json")
+            if os.path.exists(json_file):
+                with open(json_file, 'r') as f:
+                    results = json.load(f)
+                    self.current_detections = results.get('model_detections', [])
+                    self.manual_boxes = results.get('manual_detections', [])
+            else:
+                self.current_detections = []
+                self.manual_boxes = []
+            
+            # Update display
+            self.display_image()
+            self.update_detection_list()
+            self.status_var.set(f"Loaded labeled image: {os.path.basename(image_path)}")
+            
+        except Exception as e:
+            messagebox.showerror("Error", f"Failed to load labeled image: {str(e)}")
+    
     def on_closing(self):
         """Handle window close event."""
-        # Stop any running processes
-        self.is_generating = False
         self.root.quit()
         self.root.destroy()
         
