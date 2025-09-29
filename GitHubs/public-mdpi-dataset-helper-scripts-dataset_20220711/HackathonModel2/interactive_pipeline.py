@@ -119,8 +119,6 @@ class InteractiveLabelingGUI:
                   command=self.reject_all, style="Danger.TButton").pack(side=tk.LEFT, padx=5)
         ttk.Button(approval_frame, text="Save & Next", 
                   command=self.save_and_next).pack(side=tk.LEFT, padx=5)
-        ttk.Button(approval_frame, text="Save Image", 
-                  command=self.save_labeled_image).pack(side=tk.LEFT, padx=5)
         
         # Manual labeling controls
         manual_frame = ttk.LabelFrame(control_frame, text="Manual Labeling", padding=5)
@@ -569,6 +567,9 @@ class InteractiveLabelingGUI:
             
         # Also save the labeled image automatically
         self.save_labeled_image_silent()
+        
+        # Save YOLO format labels
+        self.save_yolo_labels()
             
         # Clear current state
         self.current_detections = []
@@ -702,6 +703,99 @@ class InteractiveLabelingGUI:
             
         except Exception as e:
             print(f"Error saving labeled image silently: {e}")
+            
+    def save_yolo_labels(self):
+        """Save detections in YOLO format (.txt file)."""
+        if self.current_image is None:
+            return
+            
+        try:
+            # Get image dimensions
+            img_height, img_width = self.current_image.shape[:2]
+            
+            # Generate output filename
+            base_name = os.path.splitext(os.path.basename(self.current_image_path))[0]
+            yolo_file = os.path.join(self.output_dir, f"{base_name}.txt")
+            
+            with open(yolo_file, 'w') as f:
+                # Write model detections
+                for detection in self.current_detections:
+                    x1, y1, x2, y2, conf, class_id = detection
+                    
+                    # Convert to YOLO format (normalized center coordinates and dimensions)
+                    center_x = (x1 + x2) / 2.0 / img_width
+                    center_y = (y1 + y2) / 2.0 / img_height
+                    width = (x2 - x1) / img_width
+                    height = (y2 - y1) / img_height
+                    
+                    # Write line: class_id center_x center_y width height
+                    f.write(f"{class_id} {center_x:.6f} {center_y:.6f} {width:.6f} {height:.6f}\n")
+                
+                # Write manual detections
+                for box in self.manual_boxes:
+                    x1, y1, x2, y2, class_id = box
+                    
+                    # Convert to YOLO format
+                    center_x = (x1 + x2) / 2.0 / img_width
+                    center_y = (y1 + y2) / 2.0 / img_height
+                    width = (x2 - x1) / img_width
+                    height = (y2 - y1) / img_height
+                    
+                    # Write line: class_id center_x center_y width height
+                    f.write(f"{class_id} {center_x:.6f} {center_y:.6f} {width:.6f} {height:.6f}\n")
+            
+            print(f"YOLO labels saved: {yolo_file}")
+            
+        except Exception as e:
+            print(f"Error saving YOLO labels: {e}")
+            
+    def save_yolo_labels_manual(self):
+        """Manually save YOLO labels with user feedback."""
+        if self.current_image is None:
+            messagebox.showwarning("Warning", "No image loaded")
+            return
+            
+        try:
+            # Get image dimensions
+            img_height, img_width = self.current_image.shape[:2]
+            
+            # Generate output filename
+            base_name = os.path.splitext(os.path.basename(self.current_image_path))[0]
+            yolo_file = os.path.join(self.output_dir, f"{base_name}.txt")
+            
+            with open(yolo_file, 'w') as f:
+                # Write model detections
+                for detection in self.current_detections:
+                    x1, y1, x2, y2, conf, class_id = detection
+                    
+                    # Convert to YOLO format (normalized center coordinates and dimensions)
+                    center_x = (x1 + x2) / 2.0 / img_width
+                    center_y = (y1 + y2) / 2.0 / img_height
+                    width = (x2 - x1) / img_width
+                    height = (y2 - y1) / img_height
+                    
+                    # Write line: class_id center_x center_y width height
+                    f.write(f"{class_id} {center_x:.6f} {center_y:.6f} {width:.6f} {height:.6f}\n")
+                
+                # Write manual detections
+                for box in self.manual_boxes:
+                    x1, y1, x2, y2, class_id = box
+                    
+                    # Convert to YOLO format
+                    center_x = (x1 + x2) / 2.0 / img_width
+                    center_y = (y1 + y2) / 2.0 / img_height
+                    width = (x2 - x1) / img_width
+                    height = (y2 - y1) / img_height
+                    
+                    # Write line: class_id center_x center_y width height
+                    f.write(f"{class_id} {center_x:.6f} {center_y:.6f} {width:.6f} {height:.6f}\n")
+            
+            self.status_var.set(f"YOLO labels saved: {os.path.basename(yolo_file)}")
+            messagebox.showinfo("Success", f"YOLO labels saved to:\n{yolo_file}")
+            
+        except Exception as e:
+            self.status_var.set(f"Error saving YOLO labels: {str(e)}")
+            messagebox.showerror("Error", f"Failed to save YOLO labels: {str(e)}")
             
     def on_closing(self):
         """Handle window close event."""
