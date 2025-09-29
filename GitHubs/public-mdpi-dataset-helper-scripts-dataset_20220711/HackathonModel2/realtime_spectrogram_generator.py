@@ -175,26 +175,27 @@ class RealtimeSpectrogramGenerator:
                     for file in files:
                         if file.endswith('.packet'):
                             packet_files.append(os.path.join(root, file))
-        elif self.packet_type == "merged":
-            # Look in merged_packets subdirectories (no file extension)
-            merged_dir = os.path.join(base_dir, "merged_packets")
-            if os.path.exists(merged_dir):
-                for root, dirs, files in os.walk(merged_dir):
-                    for file in files:
-                        # Merged packets have no extension, just check if it's not a directory
-                        if not os.path.isdir(os.path.join(root, file)) and '.' not in file:
-                            packet_files.append(os.path.join(root, file))
-        else:
-            # Look in both directories
-            for subdir in ["single_packet_samples", "merged_packets"]:
-                full_dir = os.path.join(base_dir, subdir)
-                if os.path.exists(full_dir):
-                    for root, dirs, files in os.walk(full_dir):
-                        for file in files:
-                            if subdir == "single_packet_samples" and file.endswith('.packet'):
-                                packet_files.append(os.path.join(root, file))
-                            elif subdir == "merged_packets" and '.' not in file:
-                                packet_files.append(os.path.join(root, file))
+        # COMMENTED OUT: Merged packet support
+        # elif self.packet_type == "merged":
+        #     # Look in merged_packets subdirectories (no file extension)
+        #     merged_dir = os.path.join(base_dir, "merged_packets")
+        #     if os.path.exists(merged_dir):
+        #         for root, dirs, files in os.walk(merged_dir):
+        #             for file in files:
+        #                 # Merged packets have no extension, just check if it's not a directory
+        #                 if not os.path.isdir(os.path.join(root, file)) and '.' not in file:
+        #                     packet_files.append(os.path.join(root, file))
+        # else:
+        #     # Look in both directories
+        #     for subdir in ["single_packet_samples", "merged_packets"]:
+        #         full_dir = os.path.join(base_dir, subdir)
+        #         if os.path.exists(full_dir):
+        #             for root, dirs, files in os.walk(full_dir):
+        #                 for file in files:
+        #                     if subdir == "single_packet_samples" and file.endswith('.packet'):
+        #                         packet_files.append(os.path.join(root, file))
+        #                     elif subdir == "merged_packets" and '.' not in file:
+        #                         packet_files.append(os.path.join(root, file))
         
         return packet_files
 
@@ -212,20 +213,21 @@ class RealtimeSpectrogramGenerator:
         """
         os.makedirs(output_dir, exist_ok=True)
         
-        if self.packet_type == "merged":
-            # For merged packets, just read the first file directly
-            if packet_files:
-                iq_samples = self.read_packet_file(packet_files[0])
-                if len(iq_samples) == 0:
-                    return None, None
-                # For merged packets, use the full file length, don't truncate
-                # The file already contains the complete merged signal
-            else:
-                return None, None
-        else:
-            # For single packets, aggregate multiple frames
-            composite_signal = self.aggregate_frames(packet_files)
-            iq_samples = composite_signal
+        # COMMENTED OUT: Merged packet support
+        # if self.packet_type == "merged":
+        #     # For merged packets, just read the first file directly
+        #     if packet_files:
+        #         iq_samples = self.read_packet_file(packet_files[0])
+        #         if len(iq_samples) == 0:
+        #             return None, None
+        #         # For merged packets, use the full file length, don't truncate
+        #         # The file already contains the complete merged signal
+        #     else:
+        #         return None, None
+        # else:
+        # For single packets, aggregate multiple frames
+        composite_signal = self.aggregate_frames(packet_files)
+        iq_samples = composite_signal
         
         # Generate spectrogram
         timestamp = datetime.datetime.now().strftime('%Y%m%d_%H%M%S_%f')
@@ -364,8 +366,11 @@ if __name__ == "__main__":
     # Parse command line arguments
     parser = argparse.ArgumentParser(description="Generate spectrograms from RF packet data")
     parser.add_argument("--num_images", type=int, default=10, help="Number of spectrograms to generate")
-    parser.add_argument("--packet_type", type=str, default="single", choices=["single", "merged", "both"], 
-                       help="Type of packets to use")
+    # COMMENTED OUT: Merged packet support
+    # parser.add_argument("--packet_type", type=str, default="single", choices=["single", "merged", "both"], 
+    #                    help="Type of packets to use")
+    parser.add_argument("--packet_type", type=str, default="single", choices=["single"], 
+                       help="Type of packets to use (only single packets supported)")
     parser.add_argument("--packets_per_image", type=int, default=5, help="Number of packets per spectrogram")
     parser.add_argument("--output_dir", type=str, default="generated_spectrograms", 
                        help="Output directory for spectrograms")
@@ -470,10 +475,11 @@ if __name__ == "__main__":
 #    python3 realtime_spectrogram_generator.py --num_images 50
 #    (Generates 50 spectrograms)
 #
-# 3. CHOOSE PACKET TYPE:
-#    python3 realtime_spectrogram_generator.py --packet_type merged
+# 3. CHOOSE PACKET TYPE (Single Packets Only):
 #    python3 realtime_spectrogram_generator.py --packet_type single
-#    python3 realtime_spectrogram_generator.py --packet_type both
+#    # COMMENTED OUT: Merged packet support
+#    # python3 realtime_spectrogram_generator.py --packet_type merged
+#    # python3 realtime_spectrogram_generator.py --packet_type both
 #
 # 4. CUSTOM OUTPUT DIRECTORY:
 #    python3 realtime_spectrogram_generator.py --output_dir my_spectrograms

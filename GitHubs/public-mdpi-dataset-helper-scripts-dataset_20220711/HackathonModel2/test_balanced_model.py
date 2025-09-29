@@ -27,11 +27,17 @@ def load_model(model_path):
         print(f"Error loading model: {e}")
         return None
 
-def test_balanced_model(model, image_dir, num_images=5, confidence_threshold=0.3):
+def test_balanced_model(model, image_dir, num_images=5, confidence_threshold=0.3, specific_files=None):
     """Test the balanced model on spectrograms."""
     
     class_names = ['WLAN', 'collision', 'bluetooth']
-    image_files = list(image_dir.glob("*.png"))[:num_images]
+    
+    if specific_files:
+        # Use specific files if provided
+        image_files = specific_files
+    else:
+        # Use random selection from directory
+        image_files = list(image_dir.glob("*.png"))[:num_images]
     
     if not image_files:
         print(f"No PNG images found in {image_dir}")
@@ -116,6 +122,8 @@ def main():
                        help="Number of images to test")
     parser.add_argument("--confidence", type=float, default=0.3,
                        help="Confidence threshold for detections")
+    parser.add_argument("--specific_image", type=str, default=None,
+                       help="Path to specific image file to test (overrides num_images)")
     
     args = parser.parse_args()
     
@@ -125,7 +133,17 @@ def main():
         return
     
     # Test balanced model
-    test_balanced_model(model, Path(args.image_dir), args.num_images, args.confidence)
+    if args.specific_image:
+        # Test specific image
+        specific_path = Path(args.specific_image)
+        if not specific_path.exists():
+            print(f"Error: Image file not found: {specific_path}")
+            return
+        print(f"Testing specific image: {specific_path.name}")
+        test_balanced_model(model, specific_path.parent, 1, args.confidence, specific_files=[specific_path])
+    else:
+        # Test multiple images
+        test_balanced_model(model, Path(args.image_dir), args.num_images, args.confidence)
 
 if __name__ == "__main__":
     main()
