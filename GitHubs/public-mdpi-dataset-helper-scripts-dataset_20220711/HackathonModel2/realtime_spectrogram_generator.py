@@ -218,6 +218,8 @@ class RealtimeSpectrogramGenerator:
                 iq_samples = self.read_packet_file(packet_files[0])
                 if len(iq_samples) == 0:
                     return None, None
+                # For merged packets, use the full file length, don't truncate
+                # The file already contains the complete merged signal
             else:
                 return None, None
         else:
