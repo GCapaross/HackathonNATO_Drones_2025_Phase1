@@ -1,6 +1,11 @@
-# YOLO Spectrogram Generation with Bounding Box Labels
+# Enhanced Spectrogram Generation with Frequency Labels and YOLO Bounding Boxes
 
-This directory contains enhanced versions of the spectrogram generation scripts that create spectrograms with YOLO bounding box labels overlaid for object detection training.
+This directory contains enhanced versions of the spectrogram generation scripts that create spectrograms with:
+
+1. **Frequency axis labels** (MHz) for better signal analysis
+2. **YOLO bounding box labels** overlaid for object detection training
+3. **Class labels** on bounding boxes with color coding
+4. **Proper coordinate system handling** to fix white image issues
 
 ## Overview
 
@@ -22,10 +27,32 @@ The dataset uses the following class IDs:
 
 ## Usage
 
-### Basic Usage
+### Enhanced Frequency Labeling (Recommended)
 
 ```bash
-# Generate spectrograms with YOLO labels
+# Generate spectrograms with frequency axis labels and YOLO bounding boxes
+python3 spectrogram_images/main_with_frequency_labels.py \
+    -p /path/to/spectrogram_training_data_20220711 \
+    -r 1024 192 \
+    -o frequency_spectrograms \
+    --center-freq 2.412e9
+```
+
+### YOLO Training Format (No Frequency Axis)
+
+```bash
+# Generate spectrograms for YOLO training (no frequency axis)
+python3 spectrogram_images/main_with_frequency_labels.py \
+    -p /path/to/spectrogram_training_data_20220711 \
+    -r 1024 192 \
+    -o yolo_training_data \
+    --no-frequency-axis
+```
+
+### Basic YOLO Labels (Original)
+
+```bash
+# Generate spectrograms with YOLO labels (original version)
 python3 spectrogram_images/main_with_labels.py \
     -p /path/to/spectrogram_training_data_20220711 \
     -r 1024 192 \

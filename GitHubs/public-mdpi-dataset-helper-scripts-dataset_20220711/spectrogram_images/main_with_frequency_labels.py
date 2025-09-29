@@ -1,19 +1,20 @@
-"""This is the main script for generating spectrograms with YOLO labels for a given training data set.
+"""Enhanced main script for generating spectrograms with frequency labels and YOLO bounding boxes
 
-:param path: root path of the spectrogram data set
-:param colormap: matplotlib colormap used for spectrogram generation
-:param resolution: Target resolution of the generated spectrogram images (e.g., -r 1024 192 )
+This script creates spectrograms with:
+1. Frequency axis labels (MHz)
+2. YOLO bounding box labels overlaid
+3. Proper coordinate system handling
 """
 
 import argparse
 from pathlib import Path
 
-from spectrogram_images.generator_with_labels import make_spectrograms_with_labels, Resolution
+from spectrogram_images.generator_with_frequency_labels import make_spectrograms_with_frequency_labels, Resolution
 from spectrogram_images.directory_manager import DirectoryManager
 from spectrogram_images.sample_files_list import SampleFileList
 
 parser = argparse.ArgumentParser(
-    description="Generate spectrogram images with YOLO labels from the time signal sample files. ",
+    description="Generate spectrogram images with frequency labels and YOLO bounding boxes from signal sample files.",
     formatter_class=argparse.ArgumentDefaultsHelpFormatter,
 )
 parser.add_argument(
@@ -43,13 +44,19 @@ parser.add_argument(
     "-o",
     "--output-dir",
     type=str,
-    default="results2",
+    default="results_with_frequency",
     help="Output directory for marked spectrograms",
 )
 parser.add_argument(
-    "--show-labels",
+    "--no-frequency-axis",
     action="store_true",
-    help="Show class labels on bounding boxes",
+    help="Disable frequency axis labels (for YOLO training)",
+)
+parser.add_argument(
+    "--center-freq",
+    type=float,
+    default=2.412e9,
+    help="Center frequency in Hz for frequency calculations",
 )
 parser.add_argument(
     "--max-samples",
@@ -76,14 +83,17 @@ if __name__ == "__main__":
         sample_files = sample_files[:args.max_samples]
         print(f"Processing only {len(sample_files)} samples for testing...")
 
-    print("generate spectrogram images with YOLO labels from signal sample files...")
+    print("Generate spectrogram images with frequency labels and YOLO bounding boxes...")
     print(f"Output directory: {args.output_dir}")
-    print(f"Show labels: {args.show_labels}")
+    print(f"Show frequency axis: {not args.no_frequency_axis}")
+    print(f"Center frequency: {args.center_freq/1e9:.3f} GHz")
 
-    make_spectrograms_with_labels(
+    make_spectrograms_with_frequency_labels(
         sample_files=sample_files,
         png_resolution=Resolution(x=args.resolution[0], y=args.resolution[1]),
         colormap=args.colormap,
         auto_normalization=False,
         results2_dir=args.output_dir,
+        show_frequency_axis=not args.no_frequency_axis,
+        center_freq=args.center_freq,
     )
