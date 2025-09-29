@@ -40,4 +40,16 @@ env/
 
 csv_files_dataset/*
 
+# DroneRF dataset (large files)
+DroneRF/
+DroneRF-master.zip
+DroneRFb-Spectra/
+Data_aggregated/
+
+# Other large dataset files
+f4c2b4n755-1.zip
+public-mdpi-dataset-helper-scripts-dataset_20220711.zip
+S3R-main.zip
+spectrogram_training_data_20220711.zip
+
 
