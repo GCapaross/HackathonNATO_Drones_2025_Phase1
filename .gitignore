@@ -22,6 +22,7 @@ GitHubs/S3R-main/model/S3R/group_1_margin_8_dim_128_length_1_gamma_0.75_tips_(xy
 # YOLO datasets (large image collections)
 YOLO_detection/datasets/
 GitHubs/public-mdpi-dataset-helper-scripts-dataset_20220711/HackathonModel/datasets/
+GitHubs/public-mdpi-dataset-helper-scripts-dataset_20220711/HackathonModel2/datasets_balanced/
 
 # Python cache
 __pycache__/
