@@ -140,17 +140,31 @@ def compare_with_ground_truth(model, image_path, label_path, class_names, confid
                     x_center, y_center, width, height = map(float, parts[1:5])
                     gt_boxes.append((class_id, x_center, y_center, width, height))
     
-    # Load image
+    # Load original image
     image = cv2.imread(str(image_path))
     image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
     img_height, img_width = image.shape[:2]
     
-    # Create comparison plot
-    fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(20, 8))
+    # Try to load the original marked image if it exists
+    marked_image_path = image_path.parent / f"{image_path.stem}_marked.png"
+    if marked_image_path.exists():
+        marked_image = cv2.imread(str(marked_image_path))
+        marked_image = cv2.cvtColor(marked_image, cv2.COLOR_BGR2RGB)
+        print(f"Found original marked image: {marked_image_path.name}")
+    else:
+        marked_image = image.copy()
+        print("No marked image found, using original image")
     
-    # Plot 1: Ground Truth
-    ax1.imshow(image)
-    ax1.set_title("Ground Truth Labels", fontsize=14)
+    # Create comparison plot with 3 panels
+    fig, (ax1, ax2, ax3) = plt.subplots(1, 3, figsize=(30, 8))
+    
+    # Plot 1: Original Marked Image (from dataset)
+    ax1.imshow(marked_image)
+    ax1.set_title("Original Dataset Labels", fontsize=14, fontweight='bold')
+    
+    # Plot 2: Ground Truth from TXT file
+    ax2.imshow(image)
+    ax2.set_title("Ground Truth (from .txt)", fontsize=14, fontweight='bold')
     
     colors = ['red', 'blue', 'green']
     for class_id, x_center, y_center, width, height in gt_boxes:
@@ -162,14 +176,15 @@ def compare_with_ground_truth(model, image_path, label_path, class_names, confid
         
         rect = Rectangle((x1, y1), w, h, linewidth=2, 
                         edgecolor=colors[class_id], facecolor='none')
-        ax1.add_patch(rect)
-        ax1.text(x1, y1-5, class_names[class_id], fontsize=10, color=colors[class_id])
+        ax2.add_patch(rect)
+        ax2.text(x1, y1-5, class_names[class_id], fontsize=10, color=colors[class_id],
+                bbox=dict(boxstyle="round,pad=0.3", facecolor='white', alpha=0.8))
     
-    ax1.axis('off')
+    ax2.axis('off')
     
-    # Plot 2: Model Predictions
-    ax2.imshow(image)
-    ax2.set_title("Model Predictions", fontsize=14)
+    # Plot 3: Model Predictions
+    ax3.imshow(image)
+    ax3.set_title("Model Predictions", fontsize=14, fontweight='bold')
     
     if results[0].boxes is not None:
         boxes = results[0].boxes
@@ -185,18 +200,21 @@ def compare_with_ground_truth(model, image_path, label_path, class_names, confid
                 
                 rect = Rectangle((x1, y1), width, height, linewidth=2,
                                edgecolor=color, facecolor='none')
-                ax2.add_patch(rect)
+                ax3.add_patch(rect)
                 
                 label = f"{class_names[class_id]}: {confidence:.2f}"
-                ax2.text(x1, y1-5, label, fontsize=10, color=color,
+                ax3.text(x1, y1-5, label, fontsize=10, color=color,
                         bbox=dict(boxstyle="round,pad=0.3", facecolor='white', alpha=0.8))
     
-    ax2.axis('off')
+    ax3.axis('off')
+    
+    # Add overall title
+    fig.suptitle(f"RF Spectrogram Analysis: {image_path.name}", fontsize=16, fontweight='bold')
     
     plt.tight_layout()
     
-    # Save comparison
-    output_path = Path("test_results") / f"comparison_{image_path.stem}.png"
+    # Save comparison to model_comparisons folder
+    output_path = Path("model_comparisons") / f"comparison_{image_path.stem}.png"
     output_path.parent.mkdir(exist_ok=True)
     fig.savefig(output_path, dpi=150, bbox_inches='tight')
     print(f"Saved comparison to: {output_path}")
@@ -214,7 +232,7 @@ def main():
                        help="Directory containing images to test")
     parser.add_argument("--num_images", type=int, default=5,
                        help="Number of images to test from directory")
-    parser.add_argument("--confidence", type=float, default=0.5,
+    parser.add_argument("--confidence", type=float, default=0.3,
                        help="Confidence threshold for detections")
     parser.add_argument("--compare", action="store_true",
                        help="Compare predictions with ground truth")
