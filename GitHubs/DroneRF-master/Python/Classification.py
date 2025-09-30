@@ -66,7 +66,20 @@ early_stop_patience  = 10  # Stop if no improvement in 10 epochs
 
 ############################### Loading ##################################
 print("Loading Data ...")
-Data = np.loadtxt("G:/Programing/HackathonNATO_Drones_2025/Data_aggregated/RF_Data.csv", delimiter=",")
+# Use relative path from Python directory
+import os
+script_dir = os.path.dirname(os.path.abspath(__file__))
+data_path = os.path.join(script_dir, "../../../Data_aggregated/RF_Data.csv")
+print(f"Loading from: {data_path}")
+
+if not os.path.exists(data_path):
+    print("\nERROR: RF_Data.csv not found!")
+    print("You need to run the MATLAB scripts first:")
+    print("  1. Main_1_Data_aggregation.m")
+    print("  2. Main_2_Data_labeling.m")
+    exit(1)
+
+Data = np.loadtxt(data_path, delimiter=",")
 
 ############################## Splitting #################################
 print("Preparing Data ...")
