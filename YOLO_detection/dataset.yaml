@@ -1,0 +1,8 @@
+names:
+- Background
+- WLAN
+- Bluetooth
+nc: 3
+path: /home/gabriel/Desktop/HackathonNATO_Drones_2025/YOLO_detection
+train: datasets/train
+val: datasets/val
