@@ -54,8 +54,8 @@ def train_yolo_model(yaml_path: Path, output_dir: Path, epochs: int = 20):
     print("Training YOLO Model")
     print("=" * 70)
     
-    # Initialize YOLO model (using YOLOv8 nano for speed)
-    model = YOLO('yolo11n-cls.pt')  # Classification model
+    # Initialize YOLO model (using detection model since we have bounding boxes)
+    model = YOLO('yolo11n.pt')  # Detection model
     
     # Train
     results = model.train(
@@ -66,7 +66,8 @@ def train_yolo_model(yaml_path: Path, output_dir: Path, epochs: int = 20):
         project=str(output_dir),
         name='yolo_single_drone',
         verbose=True,
-        plots=True
+        plots=True,
+        device=0  # Use GPU
     )
     
     return model, results
@@ -181,7 +182,7 @@ def main():
     accuracy, y_true, y_pred = evaluate_yolo_model(model, yolo_dataset_dir, output_dir)
     
     print("\n" + "=" * 70)
-    print("YOLO Training Complete!")
+    print("YOLO Training Complete")
     print("=" * 70)
     print(f"Final Test Accuracy: {accuracy*100:.2f}%")
     print(f"Results saved to: {output_dir}")

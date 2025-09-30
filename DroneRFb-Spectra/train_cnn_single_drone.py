@@ -11,6 +11,10 @@ IEEE TRANSACTIONS ON COGNITIVE COMMUNICATIONS AND NETWORKING, 2022
 """
 
 import os
+# Force CPU-only mode to avoid CUDA toolkit issues
+os.environ['CUDA_VISIBLE_DEVICES'] = '-1'
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
+
 import numpy as np
 import matplotlib.pyplot as plt
 from pathlib import Path

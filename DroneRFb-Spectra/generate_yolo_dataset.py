@@ -200,7 +200,7 @@ def generate_yolo_dataset(data_dir: Path, output_dir: Path,
             except Exception as e:
                 print(f"  Error processing {npy_file}: {e}")
         
-        print(f"  ✓ Successfully generated {success_count}/{len(samples)} {split_name} samples")
+        print(f"  Successfully generated {success_count}/{len(samples)} {split_name} samples")
         print()
     
     # Create YOLO config file
@@ -218,7 +218,7 @@ def generate_yolo_dataset(data_dir: Path, output_dir: Path,
     with open(yaml_path, 'w') as f:
         yaml.dump(yaml_content, f, default_flow_style=False, sort_keys=False)
     
-    print(f"  ✓ Created {yaml_path}")
+    print(f"  Created {yaml_path}")
     
     # Create summary file
     summary_path = output_dir / 'dataset_summary.txt'
@@ -237,10 +237,10 @@ def generate_yolo_dataset(data_dir: Path, output_dir: Path,
         for class_id, count in sorted(class_counts.items()):
             f.write(f"  {class_id:2d}. {CLASS_NAMES[class_id]:30s} - {count} samples\n")
     
-    print(f"  ✓ Created {summary_path}")
+    print(f"  Created {summary_path}")
     
     print("\n" + "=" * 70)
-    print("✅ Dataset generation complete!")
+    print("Dataset generation complete")
     print("=" * 70)
     print(f"Dataset location: {output_dir}")
     print(f"Config file: {yaml_path}")
