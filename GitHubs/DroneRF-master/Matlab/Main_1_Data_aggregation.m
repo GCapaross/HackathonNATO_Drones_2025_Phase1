@@ -28,11 +28,11 @@
 %~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~%
 
 close all; clear; clc
-load_filename = 'G:\Programing\HackathonNATO_Drones_2025\csv_files_dataset\';                 % Path of raw RF data
+load_filename = '/home/gabriel/Desktop/HackathonNATO_Drones_2025/csv_files_dataset/';                 % Path of raw RF data
 % save_filename = fileparts(pwd);
 % save_filename = [save_filename 'G:\Programing\HackathonNATO_Drones_2025\Data_aggregated\'];   % Path of aggregated data
 % Define save path
-save_filename = 'G:\Programing\HackathonNATO_Drones_2025\Data_aggregated';
+save_filename = '/home/gabriel/Desktop/HackathonNATO_Drones_2025/Data_aggregated';
 
 % Make sure the folder exists (create if not)
 if ~exist(save_filename, 'dir')

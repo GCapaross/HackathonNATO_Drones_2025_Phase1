@@ -28,7 +28,7 @@
 %~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~%
 
 close all; clear; clc
-load_filename = 'G:\Programing\HackathonNATO_Drones_2025\Data_aggregated\';      % Path of raw RF data
+load_filename = '/home/gabriel/Desktop/HackathonNATO_Drones_2025/Data_aggregated/';      % Path of raw RF data
 save_filename = load_filename;
 
 %% Parameters
