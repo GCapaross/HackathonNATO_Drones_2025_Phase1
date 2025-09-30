@@ -57,17 +57,19 @@ def train_yolo_model(yaml_path: Path, output_dir: Path, epochs: int = 20):
     # Initialize YOLO model (using detection model since we have bounding boxes)
     model = YOLO('yolo11n.pt')  # Detection model
     
-    # Train
+    # Train with reduced memory usage
     results = model.train(
         data=str(yaml_path),
         epochs=epochs,
         imgsz=640,
-        batch=32,
+        batch=4,  # REDUCED from 32 to 4 to prevent OOM
+        workers=2,  # REDUCED from 8 to 2 workers
         project=str(output_dir),
         name='yolo_single_drone',
         verbose=True,
         plots=True,
-        device=0  # Use GPU
+        device=0,  # Use GPU
+        cache=False  # Don't cache images in RAM
     )
     
     return model, results
