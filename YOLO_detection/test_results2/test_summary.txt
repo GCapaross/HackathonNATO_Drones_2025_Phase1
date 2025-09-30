@@ -1,29 +1,119 @@
 === YOLO Model Test Summary ===
-Test Date: 2025-09-28 19:13:44
+Test Date: 2025-09-28 20:28:16
 Model: yolo_training2/rf_detection/weights/best.pt
-Confidence Threshold: 0.01
-Total Images Tested: 10
+Confidence Threshold: 0.5
+Total Images Tested: 100
 
 === Individual Test Results ===
 Test# | Image | Model Detections | YOLO Labels | Detection Ratio
 ----------------------------------------------------------------------
-    1 | result_frame_1387692 |              20 |          23 |            0.87
-    2 | result_frame_1387691 |              88 |          28 |            3.14
-    3 | result_frame_1387692 |              32 |          25 |            1.28
-    4 | result_frame_1387691 |              40 |          26 |            1.54
-    5 | result_frame_1387691 |              22 |          27 |            0.81
-    6 | result_frame_1387691 |              47 |          28 |            1.68
-    7 | result_frame_1387691 |              26 |          28 |            0.93
-    8 | result_frame_1387691 |              44 |          24 |            1.83
-    9 | result_frame_1387692 |              32 |          28 |            1.14
-   10 | result_frame_1387690 |              38 |          25 |            1.52
+    1 | result_frame_1387691 |              24 |          27 |            0.89
+    2 | result_frame_1387692 |               0 |           0 |            0.00
+    3 | result_frame_1387691 |              13 |          23 |            0.57
+    4 | result_frame_1387691 |              18 |          23 |            0.78
+    5 | result_frame_1387692 |              17 |          24 |            0.71
+    6 | result_frame_1387692 |              15 |          22 |            0.68
+    7 | result_frame_1387691 |              17 |          23 |            0.74
+    8 | result_frame_1387691 |              14 |          22 |            0.64
+    9 | result_frame_1387691 |              20 |          28 |            0.71
+   10 | result_frame_1387690 |              15 |          24 |            0.62
+   11 | result_frame_1387691 |              12 |          23 |            0.52
+   12 | result_frame_1387691 |              20 |          27 |            0.74
+   13 | result_frame_1387691 |              19 |          27 |            0.70
+   14 | result_frame_1387691 |              23 |          27 |            0.85
+   15 | result_frame_1387692 |              17 |          24 |            0.71
+   16 | result_frame_1387691 |              15 |          22 |            0.68
+   17 | result_frame_1387692 |              22 |          27 |            0.81
+   18 | result_frame_1387691 |              17 |          24 |            0.71
+   19 | result_frame_1387692 |              18 |          26 |            0.69
+   20 | result_frame_1387691 |              23 |          26 |            0.88
+   21 | result_frame_1387692 |              19 |          27 |            0.70
+   22 | result_frame_1387691 |              21 |          24 |            0.88
+   23 | result_frame_1387691 |               0 |           0 |            0.00
+   24 | result_frame_1387691 |               1 |           1 |            1.00
+   25 | result_frame_1387692 |              16 |          25 |            0.64
+   26 | result_frame_1387690 |               1 |           1 |            1.00
+   27 | result_frame_1387691 |              18 |          23 |            0.78
+   28 | result_frame_1387692 |              16 |          23 |            0.70
+   29 | result_frame_1387692 |              21 |          28 |            0.75
+   30 | result_frame_1387692 |              19 |          25 |            0.76
+   31 | result_frame_1387692 |              21 |          27 |            0.78
+   32 | result_frame_1387692 |              19 |          28 |            0.68
+   33 | result_frame_1387691 |              20 |          25 |            0.80
+   34 | result_frame_1387691 |              18 |          26 |            0.69
+   35 | result_frame_1387691 |              15 |          22 |            0.68
+   36 | result_frame_1387691 |              12 |          22 |            0.55
+   37 | result_frame_1387692 |              21 |          27 |            0.78
+   38 | result_frame_1387690 |              18 |          28 |            0.64
+   39 | result_frame_1387692 |              23 |          26 |            0.88
+   40 | result_frame_1387691 |              17 |          24 |            0.71
+   41 | result_frame_1387692 |              20 |          24 |            0.83
+   42 | result_frame_1387692 |              20 |          26 |            0.77
+   43 | result_frame_1387691 |              18 |          24 |            0.75
+   44 | result_frame_1387692 |              15 |          27 |            0.56
+   45 | result_frame_1387692 |              15 |          23 |            0.65
+   46 | result_frame_1387692 |              20 |          23 |            0.87
+   47 | result_frame_1387691 |              25 |          28 |            0.89
+   48 | result_frame_1387691 |              23 |          28 |            0.82
+   49 | result_frame_1387692 |              18 |          24 |            0.75
+   50 | result_frame_1387692 |              22 |          26 |            0.85
+   51 | result_frame_1387692 |              15 |          25 |            0.60
+   52 | result_frame_1387690 |              21 |          24 |            0.88
+   53 | result_frame_1387691 |              20 |          23 |            0.87
+   54 | result_frame_1387691 |              18 |          22 |            0.82
+   55 | result_frame_1387692 |              18 |          26 |            0.69
+   56 | result_frame_1387692 |              24 |          26 |            0.92
+   57 | result_frame_1387690 |              14 |          22 |            0.64
+   58 | result_frame_1387691 |              17 |          23 |            0.74
+   59 | result_frame_1387691 |              17 |          22 |            0.77
+   60 | result_frame_1387691 |              23 |          26 |            0.88
+   61 | result_frame_1387691 |              15 |          24 |            0.62
+   62 | result_frame_1387692 |              19 |          26 |            0.73
+   63 | result_frame_1387691 |              17 |          27 |            0.63
+   64 | result_frame_1387692 |               1 |           1 |            1.00
+   65 | result_frame_1387691 |              21 |          27 |            0.78
+   66 | result_frame_1387692 |              19 |          27 |            0.70
+   67 | result_frame_1387691 |              16 |          25 |            0.64
+   68 | result_frame_1387692 |              15 |          23 |            0.65
+   69 | result_frame_1387691 |               0 |          23 |            0.00
+   70 | result_frame_1387690 |              18 |          23 |            0.78
+   71 | result_frame_1387691 |              17 |          25 |            0.68
+   72 | result_frame_1387692 |              21 |          26 |            0.81
+   73 | result_frame_1387691 |              20 |          26 |            0.77
+   74 | result_frame_1387691 |              19 |          27 |            0.70
+   75 | result_frame_1387692 |              16 |          25 |            0.64
+   76 | result_frame_1387691 |              15 |          26 |            0.58
+   77 | result_frame_1387692 |              20 |          22 |            0.91
+   78 | result_frame_1387692 |              16 |          24 |            0.67
+   79 | result_frame_1387691 |              17 |          22 |            0.77
+   80 | result_frame_1387690 |              16 |          24 |            0.67
+   81 | result_frame_1387691 |              23 |          27 |            0.85
+   82 | result_frame_1387690 |              19 |          22 |            0.86
+   83 | result_frame_1387692 |              17 |          24 |            0.71
+   84 | result_frame_1387692 |              23 |          27 |            0.85
+   85 | result_frame_1387692 |              15 |          26 |            0.58
+   86 | result_frame_1387691 |              21 |          27 |            0.78
+   87 | result_frame_1387690 |              20 |          26 |            0.77
+   88 | result_frame_1387692 |              20 |          28 |            0.71
+   89 | result_frame_1387692 |              20 |          26 |            0.77
+   90 | result_frame_1387692 |              17 |          25 |            0.68
+   91 | result_frame_1387692 |              19 |          24 |            0.79
+   92 | result_frame_1387691 |              20 |          26 |            0.77
+   93 | result_frame_1387691 |              13 |          22 |            0.59
+   94 | result_frame_1387691 |              19 |          23 |            0.83
+   95 | result_frame_1387692 |              21 |          22 |            0.95
+   96 | result_frame_1387691 |              15 |          25 |            0.60
+   97 | result_frame_1387692 |              15 |          26 |            0.58
+   98 | result_frame_1387690 |              15 |          23 |            0.65
+   99 | result_frame_1387691 |              20 |          26 |            0.77
+  100 | result_frame_1387690 |              20 |          26 |            0.77
 
 === Summary Statistics ===
-Total Model Detections: 389
-Total YOLO Labels: 262
-Average Model Detections per Image: 38.90
-Average YOLO Labels per Image: 26.20
-Overall Detection Ratio: 1.48
+Total Model Detections: 1728
+Total YOLO Labels: 2367
+Average Model Detections per Image: 17.28
+Average YOLO Labels per Image: 23.67
+Overall Detection Ratio: 0.73
 
 === Analysis Notes ===
 Model appears to be making reasonable detections.

@@ -16,7 +16,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 from joblib import Parallel, delayed
 
-from sample_files_list import SampleFileList
+from spectrogram_images.sample_files_list import SampleFileList
 
 # Switch to non-interactive backend for faster saving the spectrogram image to file
 matplotlib.use("Agg")

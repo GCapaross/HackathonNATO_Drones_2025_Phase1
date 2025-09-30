@@ -320,8 +320,8 @@ def train_model():
     results = model.train(
         data=dataset_yaml,
         epochs=50,
-        imgsz=640,
-        batch=16,
+        imgsz=1280,  # Higher resolution to preserve signal details
+        batch=8,     # Reduced batch size for higher resolution
         device=device,
         # Parameters to help with class imbalance
         cls=0.5,  # Class loss weight (higher = more focus on classification)
@@ -342,7 +342,7 @@ def train_model():
     print("Training completed!")
     
     # Create confusion matrix during training (commented out for speed)
-    training_dir = 'yolo_training2/rf_detection'
+    training_dir = 'yolo_training3/rf_detection'
     # cm_path = create_confusion_matrix_during_training(model, training_dir)
     
     # Save comprehensive training results
@@ -358,9 +358,9 @@ def main():
     print("=== YOLO RF Signal Detection Training ===")
     
     # Check if model already exists
-    if os.path.exists('yolo_training2/rf_detection/weights/best.pt'):
+    if os.path.exists('yolo_training3/rf_detection/weights/best.pt'):
         print("Found existing trained model!")
-        print("Model location: yolo_training2/rf_detection/weights/best.pt")
+        print("Model location: yolo_training3/rf_detection/weights/best.pt")
         
         # Check if we want to resume training or create results document
         response = input("Do you want to resume training? (y/n): ").lower().strip()
@@ -368,7 +368,7 @@ def main():
             print("Resuming training from existing model...")
             # Force CUDA environment before loading model
             os.environ['CUDA_VISIBLE_DEVICES'] = '0'
-            model = YOLO('yolo_training2/rf_detection/weights/best.pt')
+            model = YOLO('yolo_training3/rf_detection/weights/best.pt')
             
             # Check device
             if torch.cuda.is_available():
@@ -382,8 +382,8 @@ def main():
             results = model.train(
                 data='dataset.yaml',
                 epochs=50,
-                imgsz=640,
-                batch=16,
+                imgsz=1280,  # Higher resolution to preserve signal details
+                batch=8,     # Reduced batch size for higher resolution
                 device=device,
                 # Parameters to help with class imbalance
                 cls=0.5,  # Class loss weight (higher = more focus on classification)
@@ -403,7 +403,7 @@ def main():
             )
             
             # Save results for resumed training
-            training_dir = 'yolo_training2/rf_detection'
+            training_dir = 'yolo_training3/rf_detection'
             results_doc_path = save_training_results(results, training_dir)
             print("Resumed training completed!")
             return
@@ -415,8 +415,8 @@ def main():
     model, results_doc_path = train_model()
     
     print("\n=== Training Complete ===")
-    print("Model saved to: yolo_training2/rf_detection/weights/best.pt")
-    print("Training plots saved to: yolo_training2/rf_detection/")
+    print("Model saved to: yolo_training3/rf_detection/weights/best.pt")
+    print("Training plots saved to: yolo_training3/rf_detection/")
     print(f"Training results document: {results_doc_path}")
 
 if __name__ == "__main__":

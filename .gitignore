@@ -21,6 +21,8 @@ GitHubs/S3R-main/model/S3R/group_1_margin_8_dim_128_length_1_gamma_0.75_tips_(xy
 
 # YOLO datasets (large image collections)
 YOLO_detection/datasets/
+GitHubs/public-mdpi-dataset-helper-scripts-dataset_20220711/HackathonModel/datasets/
+GitHubs/public-mdpi-dataset-helper-scripts-dataset_20220711/HackathonModel2/datasets_balanced/
 
 # Python cache
 __pycache__/
@@ -37,5 +39,17 @@ env/
 
 
 csv_files_dataset/*
+
+# DroneRF dataset (large files)
+DroneRF/
+DroneRF-master.zip
+DroneRFb-Spectra/
+Data_aggregated/
+
+# Other large dataset files
+f4c2b4n755-1.zip
+public-mdpi-dataset-helper-scripts-dataset_20220711.zip
+S3R-main.zip
+spectrogram_training_data_20220711.zip
 
 

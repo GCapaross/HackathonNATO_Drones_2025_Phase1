@@ -1,0 +1,24 @@
+# Real-time RF Detection Pipeline Requirements
+# ===========================================
+
+# Core dependencies
+ultralytics>=8.0.0
+opencv-python>=4.5.0
+numpy>=1.21.0
+matplotlib>=3.5.0
+scipy>=1.7.0
+pillow>=8.0.0
+
+# PyTorch (for CUDA support if available)
+torch>=1.12.0
+torchvision>=0.13.0
+
+# Optional but recommended
+tqdm>=4.64.0
+
+# GUI dependencies (tkinter comes with Python)
+# On Linux, install with: sudo apt-get install python3-tk
+# On Windows/Mac: tkinter is included with Python
+
+# Note: For GPU acceleration, ensure you have compatible CUDA drivers
+# and install the appropriate PyTorch version for your system

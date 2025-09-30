@@ -1,0 +1,6 @@
+{
+  "filename": "spectrogram_20250929_231139_359567.png",
+  "detections": [],
+  "timestamp": 1759183900.3644893,
+  "model_path": "yolo_training_improved/rf_spectrogram_detection_improved4/weights/best.pt"
+}

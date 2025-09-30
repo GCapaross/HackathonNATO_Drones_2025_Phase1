@@ -1,0 +1,23 @@
+{
+  "image_path": "/home/gabriel/Desktop/HackathonNATO_Drones_2025/GitHubs/public-mdpi-dataset-helper-scripts-dataset_20220711/HackathonModel2/interactive_output/spectrogram_20250929_223226_341927.png",
+  "model_detections": [
+    [
+      43.89234924316406,
+      123.2903823852539,
+      740.067626953125,
+      504.7873840332031,
+      0.9649712443351746,
+      0
+    ],
+    [
+      1305.0860595703125,
+      112.2964859008789,
+      1356.7926025390625,
+      510.7611083984375,
+      0.8758196234703064,
+      0
+    ]
+  ],
+  "manual_detections": [],
+  "timestamp": "1759181546.74864"
+}
