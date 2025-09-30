@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Complete Pipeline Generator
+Complete Pipeline Generator - FIXED v2
 ==========================
 
 This script implements the complete pipeline:
@@ -8,7 +8,7 @@ This script implements the complete pipeline:
 2. Merge packets into frames based on config
 3. Generate PNG spectrograms from merged frames
 
-Based on config_training_data.toml and config_packet_capture.toml
+Fixed: Proper signal positioning and collision detection
 """
 
 import os
@@ -152,37 +152,40 @@ def apply_channel_effects(packet_data: np.ndarray, protocol: str) -> np.ndarray:
 
 def create_spectrogram(signal_data: np.ndarray, sample_rate: float, 
                       output_path: Path) -> bool:
-    """Create spectrogram from signal data."""
+    """Create spectrogram from signal data using the same approach as generator.py."""
     try:
         import matplotlib
         matplotlib.use('Agg')
         import matplotlib.pyplot as plt
         
-        # Create figure
-        fig, ax = plt.subplots(figsize=(10.24, 1.92))
-        
-        # Determine FFT size based on sample rate
+        # Use the same approach as generator.py
+        # Determine FFT size based on sample rate (same logic as generator.py)
         fft_size = 256 if sample_rate >= 40e6 else 128
         
-        # Generate spectrogram
+        # Create figure with proper resolution (like generator.py)
+        png_resolution_x = 1024
+        png_resolution_y = 192
+        fig, ax = plt.subplots(figsize=(png_resolution_x / 100, png_resolution_y / 100))
+        
+        # Generate spectrogram with same parameters as generator.py
         ax.specgram(
             signal_data,
             NFFT=fft_size,
-            Fs=sample_rate,
-            noverlap=0,
+            Fs=42e6,  # Dummy sample rate (same as generator.py)
+            noverlap=0,  # Same as generator.py
             mode="default",
             sides="default",
-            vmin=-150,
+            vmin=-150,  # Same normalization as generator.py
             vmax=-50,
             window=np.hanning(fft_size),
             cmap="viridis",
         )
         
-        # Format and save
+        # Format and save exactly like generator.py
         fig.subplots_adjust(left=0, right=1, bottom=0, top=1)
         ax.axis("tight")
         ax.axis("off")
-        plt.savefig(output_path, dpi=100, bbox_inches='tight')
+        plt.savefig(output_path)  # Same as generator.py
         plt.close("all")
         
         return True
@@ -192,7 +195,7 @@ def create_spectrogram(signal_data: np.ndarray, sample_rate: float,
         return False
 
 def detect_collisions(labels: List[Dict]) -> List[Dict]:
-    """Detect signal collisions and return collision bounding boxes."""
+    """Detect signal collisions considering BOTH time AND frequency overlap."""
     collision_boxes = []
     n = len(labels)
     
@@ -204,42 +207,174 @@ def detect_collisions(labels: List[Dict]) -> List[Dict]:
             signal2_start = labels[j]['start_sample']
             signal2_end = labels[j]['end_sample']
             
-            # Check for overlap
+            # Check for time overlap
             if not (signal1_end < signal2_start or signal2_end < signal1_start):
-                # Calculate collision area
+                # Calculate time collision area
                 collision_start = max(signal1_start, signal2_start)
                 collision_end = min(signal1_end, signal2_end)
                 
-                collision_box = {
-                    'class': 'COLLISION',
-                    'start_sample': collision_start,
-                    'end_sample': collision_end
-                }
-                collision_boxes.append(collision_box)
-                print(f"    Collision: {labels[i]['class']} vs {labels[j]['class']} at samples {collision_start}-{collision_end}")
+                # Get frequency bounds for both signals
+                signal1_y_min = labels[i].get('y_min', 0.3)
+                signal1_y_max = labels[i].get('y_max', 0.7)
+                signal2_y_min = labels[j].get('y_min', 0.3)
+                signal2_y_max = labels[j].get('y_max', 0.7)
+                
+                # Check for frequency overlap
+                if not (signal1_y_max < signal2_y_min or signal2_y_max < signal1_y_min):
+                    # Calculate frequency overlap
+                    collision_y_min = max(signal1_y_min, signal2_y_min)
+                    collision_y_max = min(signal1_y_max, signal2_y_max)
+                    collision_y_center = (collision_y_min + collision_y_max) / 2
+                    collision_y_height = collision_y_max - collision_y_min
+                    
+                    collision_box = {
+                        'class': 'COLLISION',
+                        'start_sample': collision_start,
+                        'end_sample': collision_end,
+                        'y_center': collision_y_center,
+                        'y_height': collision_y_height,
+                        'y_min': collision_y_min,
+                        'y_max': collision_y_max
+                    }
+                    collision_boxes.append(collision_box)
+                    print(f"    Collision: {labels[i]['class']} vs {labels[j]['class']}")
+                    print(f"      Time: samples {collision_start}-{collision_end}")
+                    print(f"      Freq: y={collision_y_center:.3f}, height={collision_y_height:.3f}")
     
     return collision_boxes
 
-def create_yolo_labels(labels: List[Dict], frame_samples: int, output_path: Path) -> bool:
-    """Create YOLO format labels."""
+def analyze_signal_characteristics(signal_data: np.ndarray, start_sample: int, end_sample: int, sample_rate: float) -> Dict:
+    """Analyze signal characteristics for a specific segment - MORE ACCURATE VERSION."""
     try:
-        # Detect collisions
-        collision_boxes = detect_collisions(labels)
+        # Extract signal segment
+        segment = signal_data[start_sample:end_sample]
+        
+        if len(segment) == 0:
+            return {'amplitude': 0, 'max_freq': 0, 'energy': 0, 'freq_center': 0.5, 'freq_bandwidth': 0.3, 'y_min': 0.35, 'y_max': 0.65}
+        
+        # Calculate amplitude characteristics
+        amplitude = np.max(np.abs(segment))
+        rms_amplitude = np.sqrt(np.mean(np.abs(segment)**2))
+        
+        # Calculate frequency characteristics using FFT
+        fft_data = np.fft.fftshift(np.fft.fft(segment))
+        freqs = np.fft.fftshift(np.fft.fftfreq(len(segment), 1/sample_rate))
+        power_spectrum = np.abs(fft_data)**2
+        
+        # Find peak frequency
+        max_freq_idx = np.argmax(power_spectrum)
+        max_freq = freqs[max_freq_idx]
+        
+        # Calculate frequency bandwidth using 20% threshold for tighter bounds
+        peak_power = np.max(power_spectrum)
+        threshold = peak_power * 0.2  # Increased threshold for tighter fit
+        
+        # Find frequency range
+        above_threshold = power_spectrum > threshold
+        if np.any(above_threshold):
+            freq_indices = np.where(above_threshold)[0]
+            min_freq = freqs[freq_indices[0]]
+            max_freq_range = freqs[freq_indices[-1]]
+            freq_bandwidth = abs(max_freq_range - min_freq)
+            freq_center = (min_freq + max_freq_range) / 2
+            
+            # Normalize to image coordinates (0 = bottom, 1 = top)
+            freq_center_norm = (freq_center + sample_rate/2) / sample_rate
+            freq_bandwidth_norm = freq_bandwidth / sample_rate
+            
+            # Calculate y_min and y_max for collision detection
+            y_min = (min_freq + sample_rate/2) / sample_rate
+            y_max = (max_freq_range + sample_rate/2) / sample_rate
+        else:
+            freq_center = max_freq
+            freq_bandwidth = 0.15 * sample_rate
+            
+            freq_center_norm = (freq_center + sample_rate/2) / sample_rate
+            freq_bandwidth_norm = freq_bandwidth / sample_rate
+            
+            # Calculate bounds
+            y_min = freq_center_norm - freq_bandwidth_norm / 2
+            y_max = freq_center_norm + freq_bandwidth_norm / 2
+        
+        # Clamp to valid range
+        freq_center_norm = max(0.0, min(1.0, freq_center_norm))
+        freq_bandwidth_norm = max(0.05, min(0.8, freq_bandwidth_norm))  # Reduced min from 0.1 to 0.05
+        y_min = max(0.0, min(1.0, y_min))
+        y_max = max(0.0, min(1.0, y_max))
+        
+        # Calculate energy
+        energy = np.sum(power_spectrum)
+        
+        print(f"      Freq: {freq_center/1e6:.1f} MHz, BW: {freq_bandwidth/1e6:.1f} MHz")
+        print(f"      Norm: y_center={freq_center_norm:.3f}, height={freq_bandwidth_norm:.3f}")
+        print(f"      Bounds: y_min={y_min:.3f}, y_max={y_max:.3f}")
+        
+        return {
+            'amplitude': amplitude,
+            'rms_amplitude': rms_amplitude,
+            'max_freq': abs(max_freq),
+            'energy': energy,
+            'freq_center': freq_center_norm,
+            'freq_bandwidth': freq_bandwidth_norm,
+            'y_min': y_min,
+            'y_max': y_max
+        }
+    except Exception as e:
+        print(f"Error analyzing signal: {e}")
+        return {'amplitude': 0, 'max_freq': 0, 'energy': 0, 'freq_center': 0.5, 'freq_bandwidth': 0.3, 'y_min': 0.35, 'y_max': 0.65}
+
+def create_yolo_labels(labels: List[Dict], frame_samples: int, output_path: Path, signal_data: np.ndarray = None, sample_rate: float = None) -> bool:
+    """Create YOLO format labels - IMPROVED VERSION."""
+    try:
+        # First, analyze all signals and store their frequency bounds
+        # Make a copy to avoid modifying original labels during collision detection
+        labels_with_bounds = []
+        for label in labels:
+            # Create a copy of the label
+            label_copy = dict(label)
+            
+            if signal_data is not None and sample_rate is not None:
+                characteristics = analyze_signal_characteristics(
+                    signal_data, label['start_sample'], label['end_sample'], sample_rate
+                )
+                label_copy['y_center'] = characteristics['freq_center']
+                label_copy['y_height'] = characteristics['freq_bandwidth']
+                label_copy['y_min'] = characteristics['y_min']
+                label_copy['y_max'] = characteristics['y_max']
+            else:
+                label_copy['y_center'] = 0.5
+                label_copy['y_height'] = 0.3
+                label_copy['y_min'] = 0.35
+                label_copy['y_max'] = 0.65
+            
+            labels_with_bounds.append(label_copy)
+        
+        # Now detect collisions with frequency information
+        collision_boxes = detect_collisions(labels_with_bounds)
         
         with open(output_path, 'w') as f:
-            # Write signal labels
-            for label in labels:
-                # Convert to YOLO format
+            # Write signal labels (use labels_with_bounds for frequency info)
+            for i, label in enumerate(labels):
                 class_id = get_class_id(label['class'])
                 
-                # Calculate normalized coordinates
+                # Calculate normalized coordinates (x-axis = time)
                 start_norm = label['start_sample'] / frame_samples
                 end_norm = label['end_sample'] / frame_samples
                 width_norm = end_norm - start_norm
                 center_norm = start_norm + width_norm / 2
                 
+                # Get frequency info from the bounds version
+                y_center = labels_with_bounds[i]['y_center']
+                height_norm = labels_with_bounds[i]['y_height']
+                
+                # Ensure reasonable bounds
+                y_center = max(0.0, min(1.0, y_center))
+                height_norm = max(0.05, min(0.9, height_norm))
+                
+                print(f"    Label {label['class']}: x={center_norm:.3f}, y={y_center:.3f}, w={width_norm:.3f}, h={height_norm:.3f}")
+                
                 # YOLO format: class_id x_center y_center width height
-                f.write(f"{class_id} {center_norm:.6f} 0.5 {width_norm:.6f} 0.5\n")
+                f.write(f"{class_id} {center_norm:.6f} {y_center:.6f} {width_norm:.6f} {height_norm:.6f}\n")
             
             # Write collision labels (class_id = 4)
             for collision in collision_boxes:
@@ -251,8 +386,18 @@ def create_yolo_labels(labels: List[Dict], frame_samples: int, output_path: Path
                 width_norm = end_norm - start_norm
                 center_norm = start_norm + width_norm / 2
                 
+                # Use the calculated collision bounds
+                y_center = collision['y_center']
+                height_norm = collision['y_height']
+                
+                # Ensure reasonable bounds
+                y_center = max(0.0, min(1.0, y_center))
+                height_norm = max(0.05, min(0.9, height_norm))
+                
+                print(f"    Collision label: x={center_norm:.3f}, y={y_center:.3f}, w={width_norm:.3f}, h={height_norm:.3f}")
+                
                 # YOLO format: class_id x_center y_center width height
-                f.write(f"{class_id} {center_norm:.6f} 0.5 {width_norm:.6f} 0.5\n")
+                f.write(f"{class_id} {center_norm:.6f} {y_center:.6f} {width_norm:.6f} {height_norm:.6f}\n")
         
         return True
         
@@ -271,10 +416,122 @@ def get_class_id(protocol: str) -> int:
     }
     return class_mapping.get(protocol, 0)
 
+def get_class_name(class_id: int) -> str:
+    """Get class name from class ID."""
+    class_names = {
+        0: 'WLAN',
+        1: 'BT',
+        2: 'BLE',
+        3: 'BLE2',
+        4: 'COLLISION'
+    }
+    return class_names.get(class_id, 'UNKNOWN')
+
+def create_marked_image(spectrogram_path: Path, label_path: Path, output_path: Path) -> bool:
+    """Create marked image with bounding boxes drawn on spectrogram."""
+    try:
+        import matplotlib
+        matplotlib.use('Agg')
+        import matplotlib.pyplot as plt
+        from matplotlib.patches import Rectangle
+        from PIL import Image
+        import numpy as np
+        
+        # Load the spectrogram image
+        img = Image.open(spectrogram_path)
+        img_array = np.array(img)
+        
+        # Create figure with same resolution as generator.py
+        png_resolution_x = 1024
+        png_resolution_y = 192
+        fig, ax = plt.subplots(figsize=(png_resolution_x / 100, png_resolution_y / 100))
+        ax.imshow(img_array, aspect='auto')
+        
+        # Define colors for different classes
+        colors = ['red', 'blue', 'green', 'yellow', 'orange']
+        class_names = ['WLAN', 'BT', 'BLE', 'BLE2', 'COLLISION']
+        
+        # Read YOLO labels
+        labels = []
+        if label_path.exists():
+            with open(label_path, 'r') as f:
+                for line in f:
+                    line = line.strip()
+                    if line and not line.startswith('#'):
+                        parts = line.split()
+                        if len(parts) >= 5:
+                            class_id = int(parts[0])
+                            x_center = float(parts[1])
+                            y_center = float(parts[2])
+                            width = float(parts[3])
+                            height = float(parts[4])
+                            
+                            labels.append({
+                                'class_id': class_id,
+                                'x_center': x_center,
+                                'y_center': y_center,
+                                'width': width,
+                                'height': height
+                            })
+        
+        # Get image dimensions
+        img_height, img_width = img_array.shape[:2]
+        
+        # Draw bounding boxes
+        for label in labels:
+            class_id = label['class_id']
+            class_name = get_class_name(class_id)
+            
+            # Convert normalized coordinates to pixel coordinates
+            x_center_pixel = label['x_center'] * img_width
+            y_center_pixel = label['y_center'] * img_height
+            width_pixel = label['width'] * img_width
+            height_pixel = label['height'] * img_height
+            
+            # Calculate box corners
+            x1 = x_center_pixel - width_pixel / 2
+            y1 = y_center_pixel - height_pixel / 2
+            
+            # Choose color based on class
+            color = colors[class_id % len(colors)]
+            
+            # Create rectangle
+            rect = Rectangle(
+                (x1, y1), width_pixel, height_pixel,
+                linewidth=2,
+                edgecolor=color,
+                facecolor='none',
+                alpha=0.8
+            )
+            ax.add_patch(rect)
+            
+            # Add label text
+            ax.text(
+                x1, y1 - 5,
+                f"{class_name}",
+                color=color,
+                fontsize=8,
+                fontweight='bold',
+                bbox=dict(boxstyle="round,pad=0.3", facecolor='white', alpha=0.8)
+            )
+        
+        # Format and save
+        ax.set_title(f"Signal Detection: {len(labels)} objects found", fontsize=10, pad=10)
+        ax.axis('off')
+        plt.tight_layout()
+        plt.savefig(output_path, dpi=100, bbox_inches='tight')
+        plt.close("all")
+        
+        return True
+        
+    except Exception as e:
+        print(f"Error creating marked image: {e}")
+        return False
+
 def main():
     """Main function to run the complete pipeline."""
     print("=" * 60)
-    print("Complete Pipeline Generator")
+    print("Complete Pipeline Generator - FIXED v2")
     print("=" * 60)
     
     # Define paths based on config
@@ -320,12 +577,13 @@ def main():
             # Create labels
             if success and labels:
                 label_file = output_dir / "results" / f"{frame_id}.txt"
-                create_yolo_labels(labels, len(frame_data), label_file)
+                create_yolo_labels(labels, len(frame_data), label_file, frame_data, sample_rate)
                 
-                # Report collision info
-                collision_boxes = detect_collisions(labels)
-                if collision_boxes:
-                    print(f"    Found {len(collision_boxes)} collision areas")
+                # Create marked image with bounding boxes
+                marked_file = output_dir / "results" / f"{frame_id}_marked.png"
+                marked_success = create_marked_image(spectrogram_file, label_file, marked_file)
+                if marked_success:
+                    print(f"    Created marked image: {marked_file.name}")
             
             if success:
                 total_frames += 1
